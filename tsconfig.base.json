@@ -1,0 +1,27 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "CommonJS",
+    "moduleResolution": "Node",
+    "lib": ["ES2022"],
+    "strict": true,
+    "noImplicitOverride": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
+    "resolveJsonModule": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "baseUrl": ".",
+    "paths": {
+      "@dispatch/config": ["packages/config/src"],
+      "@dispatch/logger": ["packages/logger/src"],
+      "@dispatch/messaging": ["packages/messaging/src"],
+      "@dispatch/idempotency": ["packages/idempotency/src"],
+      "@dispatch/webhooks-core": ["packages/webhooks-core/src"],
+      "@dispatch/workflows": ["packages/workflows/src"]
+    },
+    "outDir": "dist"
+  }
+}
+

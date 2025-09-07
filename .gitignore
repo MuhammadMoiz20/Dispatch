@@ -1,0 +1,20 @@
+node_modules
+.turbo
+.next
+dist
+coverage
+/.env
+**/.env
+*.log
+.DS_Store
+.idea
+.vscode/settings.json
+pnpm-lock.yaml
+
+# Project documentation (excluded from initial commit)
+docs/
+ARCHITECTURE.md
+CONTRIBUTING.md
+CODEOWNERS
+README.md
+TODO.md
