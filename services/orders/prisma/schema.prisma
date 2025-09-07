@@ -4,7 +4,7 @@ generator client {
 
 datasource db {
   provider = "postgresql"
-  url      = env("POSTGRES_URL")
+  url      = env("DATABASE_URL")
 }
 
 model Order {
@@ -18,6 +18,9 @@ model Order {
   returns    Return[]
 
   @@index([tenantId])
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+  @@index([tenantId, channel])
   @@unique([tenantId, channel, externalId])
 }
 
@@ -41,4 +44,3 @@ model Return {
   order Order @relation(fields: [orderId], references: [id])
   @@index([tenantId])
 }
-

@@ -1,12 +1,17 @@
-import amqplib, { Connection, Channel, Options } from 'amqplib';
+import amqplib, { Channel, Options, ConsumeMessage, ChannelModel } from 'amqplib';
 
 export function createRabbitMQ(url = process.env.RABBITMQ_URL || 'amqp://localhost:5672') {
-  let conn: Connection | null = null;
+  let conn: ChannelModel | null = null;
   let channel: Channel | null = null;
 
   async function ensure(): Promise<Channel> {
-    if (!conn) conn = await amqplib.connect(url);
-    if (!channel) channel = await conn.createChannel();
+    if (!conn) {
+      conn = await amqplib.connect(url);
+    }
+    if (!channel) {
+      // conn is ensured above; use non-null assertion to satisfy TS
+      channel = await conn!.createChannel();
+    }
     return channel!;
   }
 
@@ -23,7 +28,7 @@ export function createRabbitMQ(url = process.env.RABBITMQ_URL || 'amqp://localho
     async subscribe<T>(queue: string, handler: (msg: T) => Promise<void> | void) {
       const ch = await ensure();
       await ch.assertQueue(queue, { durable: true });
-      await ch.consume(queue, async (m) => {
+      await ch.consume(queue, async (m: ConsumeMessage | null) => {
         if (!m) return;
         try {
           const content = JSON.parse(m.content.toString());

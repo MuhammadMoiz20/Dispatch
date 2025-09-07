@@ -8,15 +8,27 @@
     "dev": "pnpm -r --parallel dev",
     "lint": "pnpm -r lint",
     "typecheck": "tsc -b",
-    "format": "prettier --write ."
+    "format": "prettier --write .",
+    "test": "pnpm -r test --if-present",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "e2e:browsers": "npx playwright install --with-deps",
+    "seed:orders": "node scripts/seed-orders.mjs"
   },
   "devDependencies": {
+    "@types/amqplib": "^0.10.7",
+    "@types/bcryptjs": "^3.0.0",
+    "@types/express": "^4.17.23",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^20.11.30",
     "@typescript-eslint/eslint-plugin": "^7.18.0",
     "@typescript-eslint/parser": "^7.18.0",
-    "@types/node": "^20.11.30",
+    "dotenv": "^17.2.2",
     "eslint": "^8.57.0",
     "eslint-config-prettier": "^9.1.0",
     "prettier": "^3.2.5",
+    "@playwright/test": "^1.47.1",
+    "jsonwebtoken": "^9.0.2",
     "typescript": "^5.4.0"
   }
 }

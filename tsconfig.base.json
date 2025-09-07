@@ -14,14 +14,13 @@
     "forceConsistentCasingInFileNames": true,
     "baseUrl": ".",
     "paths": {
-      "@dispatch/config": ["packages/config/src"],
-      "@dispatch/logger": ["packages/logger/src"],
-      "@dispatch/messaging": ["packages/messaging/src"],
-      "@dispatch/idempotency": ["packages/idempotency/src"],
-      "@dispatch/webhooks-core": ["packages/webhooks-core/src"],
-      "@dispatch/workflows": ["packages/workflows/src"]
+      "@dispatch/config": ["packages/config/dist"],
+      "@dispatch/logger": ["packages/logger/dist"],
+      "@dispatch/messaging": ["packages/messaging/dist"],
+      "@dispatch/idempotency": ["packages/idempotency/dist"],
+      "@dispatch/webhooks-core": ["packages/webhooks-core/dist"],
+      "@dispatch/workflows": ["packages/workflows/dist"]
     },
     "outDir": "dist"
   }
 }
-

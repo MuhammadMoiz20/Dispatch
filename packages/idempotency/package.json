@@ -11,6 +11,10 @@
   "dependencies": {
     "ioredis": "^5.4.1",
     "object-hash": "^3.0.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/object-hash": "^3.0.6"
   }
 }
 
