@@ -23,6 +23,7 @@ model User {
 
   tenant Tenant @relation(fields: [tenantId], references: [id])
   authCredential AuthCredential?
+  devices Device[] @relation("UserDevices")
   @@index([tenantId])
 }
 
@@ -33,4 +34,17 @@ model AuthCredential {
   createdAt     DateTime @default(now())
 
   user User @relation(fields: [userId], references: [id])
+}
+
+model Device {
+  id         String   @id @default(uuid())
+  userId     String
+  deviceName String
+  token      String   @unique
+  createdAt  DateTime @default(now())
+  lastSeenAt DateTime?
+
+  user User @relation("UserDevices", fields: [userId], references: [id])
+
+  @@index([userId])
 }

@@ -1,0 +1,35 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Rule {
+  id        String   @id @default(uuid())
+  tenantId  String
+  name      String
+  enabled   Boolean  @default(true)
+  condition Json
+  actions   Json
+  priority  Int      @default(100)
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+  @@index([tenantId, priority])
+}
+
+model Outbox {
+  id          String   @id @default(uuid())
+  tenantId    String?
+  type        String
+  payload     Json
+  status      String   @default("pending") // pending|published|failed
+  attempts    Int      @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([status, createdAt])
+}

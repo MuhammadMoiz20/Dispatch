@@ -10,8 +10,8 @@
     "typecheck": "tsc -b",
     "format": "prettier --write .",
     "test": "pnpm -r test --if-present",
-    "test:e2e": "playwright test",
-    "test:e2e:headed": "playwright test --headed",
+    "test:e2e": "playwright test -c e2e/playwright.config.ts",
+    "test:e2e:headed": "playwright test -c e2e/playwright.config.ts --headed",
     "e2e:browsers": "npx playwright install --with-deps",
     "seed:orders": "node scripts/seed-orders.mjs"
   },

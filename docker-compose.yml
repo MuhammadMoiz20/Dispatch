@@ -48,7 +48,7 @@ services:
         condition: service_healthy
     ports:
       - '14001:4001'
-    command: sh -c "pnpm -C services/users exec prisma migrate deploy && node services/users/dist/main.js"
+    command: sh -c "pnpm -C services/users exec prisma migrate deploy || pnpm -C services/users exec prisma db push; node services/users/dist/main.js"
 
   orders:
     build:
@@ -61,14 +61,24 @@ services:
       - NODE_ENV=development
       - RABBITMQ_URL=amqp://rabbitmq:5672
       - REDIS_URL=redis://redis:6379
+      - RULES_URL=http://rules:4004
+      - LABELS_BUCKET=dispatch-labels
+      - S3_ENDPOINT=http://minio:9000
+      - S3_PUBLIC_URL=http://localhost:9000
+      - S3_REGION=us-east-1
+      - S3_ACCESS_KEY_ID=minio
+      - S3_SECRET_ACCESS_KEY=minio123
+      - S3_FORCE_PATH_STYLE=true
     depends_on:
       postgres:
         condition: service_healthy
       rabbitmq:
         condition: service_healthy
+      minio:
+        condition: service_started
     ports:
       - '14002:4002'
-    command: sh -c "pnpm -C services/orders exec prisma migrate deploy && node services/orders/dist/services/orders/src/main.js"
+    command: sh -c "pnpm -C services/orders exec prisma migrate deploy || pnpm -C services/orders exec prisma db push; node services/orders/dist/main.js"
 
   api-gateway:
     build:
@@ -78,6 +88,7 @@ services:
       - PORT=3000
       - USERS_URL=http://users:4001
       - ORDERS_URL=http://orders:4002
+      - WEBHOOKS_URL=http://webhooks:4003
       - JWT_SECRET=dev-secret
       - NODE_ENV=development
     depends_on:
@@ -87,7 +98,76 @@ services:
         condition: service_started
     ports:
       - '3000:3000'
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s -X POST http://localhost:3000/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{ health }\"}' | grep -q \"\\\"ok\\\"\""]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  webhooks:
+    build:
+      context: .
+      dockerfile: services/webhooks/Dockerfile
+    environment:
+      - PORT=4003
+      - DATABASE_URL=postgresql://dispatch:dispatch@postgres:5432/dispatch?schema=webhooks
+      - JWT_SECRET=dev-secret
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - REDIS_URL=redis://redis:6379
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - '14003:4003'
+    # Ensure schema exists when there are no migrations: run db push in that case
+    command: sh -c "if [ -d services/webhooks/prisma/migrations ] && [ \"$(ls -A services/webhooks/prisma/migrations 2>/dev/null)\" ]; then pnpm -C services/webhooks exec prisma migrate deploy; else pnpm -C services/webhooks exec prisma db push; fi; node services/webhooks/dist/main.js"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4003/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  rules:
+    build:
+      context: .
+      dockerfile: services/rules/Dockerfile
+    environment:
+      - PORT=4004
+      - DATABASE_URL=postgresql://dispatch:dispatch@postgres:5432/dispatch?schema=rules
+      - JWT_SECRET=dev-secret
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - ORDERS_URL=http://orders:4002
+    depends_on:
+      postgres:
+        condition: service_healthy
+      rabbitmq:
+        condition: service_healthy
+    ports:
+      - '14004:4004'
+    command: sh -c "pnpm -C services/rules exec prisma migrate deploy || pnpm -C services/rules exec prisma db push; node services/rules/dist/main.js"
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:4004/health"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  minio:
+    image: minio/minio:latest
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: minio123
+    command: server /data --console-address ":9001"
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    volumes:
+      - miniodata:/data
 
 volumes:
   pgdata: {}
   redisdata: {}
+  miniodata: {}

@@ -26,6 +26,8 @@ COPY packages ./packages
 COPY services/orders ./services/orders
 # Build shared packages first, then service
 RUN pnpm -r --filter=./packages/** build \
+  # Ensure workspace deps are linked into service's node_modules
+  && pnpm -C services/orders install --silent \
   && pnpm -C services/orders prisma:generate \
   && pnpm -C services/orders build
 
@@ -44,4 +46,4 @@ COPY --from=build /app/node_modules ./node_modules
 # Include workspace packages (built dist) for PNPM symlinked deps
 COPY --from=build /app/packages ./packages
 EXPOSE 4002
-CMD ["node", "services/orders/dist/services/orders/src/main.js"]
+CMD ["node", "services/orders/dist/main.js"]

@@ -3,9 +3,13 @@
   "compilerOptions": {
     "outDir": "dist",
     "emitDecoratorMetadata": true,
-  "experimentalDecorators": true,
-  "types": ["node"]
+    "experimentalDecorators": true,
+    "types": ["node", "jest"],
+    "paths": {
+      "@dispatch/config": ["packages/config/dist"],
+      "@dispatch/logger": ["packages/logger/dist"],
+      "@dispatch/telemetry": ["packages/telemetry/dist"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "test", "test/**/*.ts"]
 }
-

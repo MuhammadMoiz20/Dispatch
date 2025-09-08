@@ -1,14 +1,21 @@
 import { AuthService } from '../../src/auth.service';
 import { PrismaService } from '../../src/prisma.service';
 
-const mockPrisma = () => ({
+type PrismaMock = {
+  user: { findUnique: jest.Mock; create: jest.Mock };
+  tenant: { create: jest.Mock };
+  authCredential: { create: jest.Mock; findUnique: jest.Mock };
+  $transaction: jest.Mock;
+};
+
+const mockPrisma = (): PrismaMock => ({
   user: { findUnique: jest.fn(), create: jest.fn() },
   tenant: { create: jest.fn() },
   authCredential: { create: jest.fn(), findUnique: jest.fn() },
   $transaction: jest.fn((fn: any) => fn(mock as any)),
 });
 
-const mock = mockPrisma();
+const mock: PrismaMock = mockPrisma();
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -44,4 +51,3 @@ describe('AuthService', () => {
     expect(res.token).toBeTruthy();
   });
 });
-

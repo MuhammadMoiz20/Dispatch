@@ -1,6 +1,20 @@
 import amqplib, { Channel, Options, ConsumeMessage, ChannelModel } from 'amqplib';
 
 export function createRabbitMQ(url = process.env.RABBITMQ_URL || 'amqp://localhost:5672') {
+  // In test environments, return a stubbed client that does not open sockets
+  if (process.env.NODE_ENV === 'test') {
+    return {
+      async publish(_queue: string, _message: object, _options?: Options.Publish) {
+        // no-op in tests
+      },
+      async subscribe<T>(_queue: string, _handler: (msg: T) => Promise<void> | void) {
+        // no-op in tests
+      },
+      async close() {
+        // no-op in tests
+      },
+    };
+  }
   let conn: ChannelModel | null = null;
   let channel: Channel | null = null;
 
@@ -47,4 +61,3 @@ export function createRabbitMQ(url = process.env.RABBITMQ_URL || 'amqp://localho
     },
   };
 }
-

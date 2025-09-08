@@ -4,8 +4,13 @@
     "outDir": "dist",
     "emitDecoratorMetadata": true,
   "experimentalDecorators": true,
-  "types": ["node"]
+  "types": ["node", "jest"],
+    "paths": {
+      "@dispatch/config": ["packages/config/src"],
+      "@dispatch/logger": ["packages/logger/src"],
+      "@dispatch/idempotency": ["packages/idempotency/src"],
+      "@dispatch/telemetry": ["packages/telemetry/src"]
+    }
   },
-  "include": ["src"]
+  "include": ["src", "test", "test/**/*.ts"]
 }
-

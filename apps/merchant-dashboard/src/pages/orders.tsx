@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { makeWsClient, subscribe } from '../lib/subscriptions';
 import { useRouter } from 'next/router';
 
 type Order = {
@@ -63,6 +64,16 @@ export default function Orders() {
 
   useEffect(() => {
     if (token) void fetchOrders({ page: 1 });
+    if (!token) return;
+    // Live updates: refetch on new order events
+    const client = makeWsClient(token);
+    const q = `subscription { orderCreated { orderId channel externalId at } }`;
+    const dispose = subscribe(client, q, {}, () => {
+      void fetchOrders({ page: 1 });
+    });
+    return () => {
+      try { dispose(); } catch {}
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 

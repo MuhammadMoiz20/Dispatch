@@ -11,7 +11,11 @@ export class JwtAuthGuard implements CanActivate {
     const info = gqlCtx.getInfo();
     const fieldName = info?.fieldName;
     const parentType = info?.parentType?.name;
-    if (parentType === 'Mutation' && (fieldName === 'login' || fieldName === 'signup')) return true;
+    if (parentType === 'Mutation' && (fieldName === 'login' || fieldName === 'signup' || fieldName === 'initiateReturn')) return true;
+    // Public queries
+    if (parentType === 'Query' && (fieldName === 'returnById' || fieldName === 'labelByReturn' || fieldName === 'returnLabel' || fieldName === 'health')) return true;
+    // Public subscriptions (returns portal)
+    if (parentType === 'Subscription' && fieldName === 'returnUpdated') return true;
     // Fast-path if context already has a verified user
     if (ctx?.user?.tenantId && ctx?.user?.userId) return true;
 

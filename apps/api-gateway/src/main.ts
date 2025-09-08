@@ -3,9 +3,12 @@ import 'reflect-metadata';
 import { NestFactory } from '@nestjs/core';
 import { Logger } from '@nestjs/common';
 import { AppModule } from './modules/app.module';
+import { initTelemetry } from '@dispatch/telemetry';
 import { loadConfig } from '@dispatch/config';
 
 async function bootstrap() {
+  // Initialize OpenTelemetry (no-op if deps not installed)
+  initTelemetry('api-gateway');
   const config = loadConfig({ SERVICE_NAME: 'api-gateway' });
   const corsOrigins = (process.env.CORS_ORIGINS || 'http://localhost:3001,http://localhost:3002')
     .split(',')

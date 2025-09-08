@@ -1,8 +1,12 @@
 import { OrdersService } from '../../src/orders.service';
 
+jest.mock('@dispatch/messaging', () => ({
+  createRabbitMQ: () => ({ publish: jest.fn().mockResolvedValue(undefined) }),
+}));
+
 describe('OrdersService', () => {
   const prisma: any = {
-    $transaction: jest.fn((arg: any) => (typeof arg === 'function' ? arg(prisma) : Promise.resolve(arg))),
+    $transaction: jest.fn((arg: any) => (typeof arg === 'function' ? arg(prisma) : Promise.all(arg))),
     order: {
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -39,5 +43,23 @@ describe('OrdersService', () => {
     expect(res.total).toBe(42);
     expect(res.items[0]).toMatchObject({ id: 'o1', itemsCount: 3 });
   });
-});
 
+  it('list applies filters and pagination to prisma calls', async () => {
+    const svc = new OrdersService(prisma);
+    (prisma.$transaction as any).mockImplementation((ops: any[]) => Promise.all(ops.map((op) => op)));
+    (prisma.order.count as any).mockResolvedValue(1);
+    (prisma.order.findMany as any).mockResolvedValue([
+      { id: 'o2', channel: 'shopify', externalId: 'e2', status: 'created', createdAt: new Date(), _count: { items: 1 } },
+    ]);
+    const res = await svc.list('tenant-1', { page: 3, pageSize: 5, status: 'created', channel: 'shopify' } as any);
+    expect(res.page).toBe(3);
+    expect(prisma.order.count).toHaveBeenCalledWith({ where: { tenantId: 'tenant-1', status: 'created', channel: 'shopify' } });
+    expect(prisma.order.findMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        where: { tenantId: 'tenant-1', status: 'created', channel: 'shopify' },
+        skip: 10,
+        take: 5,
+      }),
+    );
+  });
+});

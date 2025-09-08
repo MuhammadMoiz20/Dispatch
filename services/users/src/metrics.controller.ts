@@ -3,7 +3,10 @@ import type { Response } from 'express';
 import { Counter, Registry, collectDefaultMetrics } from 'prom-client';
 
 export const registry = new Registry();
-collectDefaultMetrics({ register: registry });
+// Avoid background timers during tests that keep Jest open
+if (process.env.NODE_ENV !== 'test') {
+  collectDefaultMetrics({ register: registry });
+}
 
 export const authAttemptsTotal = new Counter({
   name: 'auth_attempts_total',
@@ -34,4 +37,3 @@ export class MetricsController {
     return res.send(await registry.metrics());
   }
 }
-

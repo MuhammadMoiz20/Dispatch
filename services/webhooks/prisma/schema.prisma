@@ -1,0 +1,57 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Endpoint {
+  id         String     @id @default(uuid())
+  tenantId   String
+  url        String
+  secret     String
+  enabled    Boolean    @default(true)
+  createdAt  DateTime   @default(now())
+  deliveries Delivery[]
+
+  @@unique([tenantId, url])
+  @@index([tenantId])
+}
+
+model Delivery {
+  id             String   @id @default(uuid())
+  tenantId       String
+  endpointId     String
+  eventType      String
+  payload        Json
+  status         String   @default("pending") // pending|retrying|delivered|failed|dead
+  attempts       Int      @default(0)
+  responseStatus Int?
+  responseBody   String?
+  lastError      String?
+  nextAttemptAt  DateTime?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  endpoint Endpoint @relation(fields: [endpointId], references: [id])
+
+  @@index([tenantId, createdAt])
+  @@index([tenantId, status])
+  @@index([endpointId])
+  @@index([nextAttemptAt])
+}
+
+model Outbox {
+  id          String   @id @default(uuid())
+  tenantId    String?
+  type        String
+  payload     Json
+  status      String   @default("pending") // pending|published|failed
+  attempts    Int      @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([status, createdAt])
+}

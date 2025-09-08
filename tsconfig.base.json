@@ -19,7 +19,8 @@
       "@dispatch/messaging": ["packages/messaging/dist"],
       "@dispatch/idempotency": ["packages/idempotency/dist"],
       "@dispatch/webhooks-core": ["packages/webhooks-core/dist"],
-      "@dispatch/workflows": ["packages/workflows/dist"]
+      "@dispatch/workflows": ["packages/workflows/dist"],
+      "@dispatch/telemetry": ["packages/telemetry/dist"]
     },
     "outDir": "dist"
   }

@@ -30,6 +30,14 @@ class OrdersPageGql {
   total!: number;
 }
 
+function mapHttpToGqlError(code: string, status: number, data: any): Error {
+  const message = data?.message || data?.error || 'Request failed';
+  const err = new Error(message);
+  (err as any).extensions = { code, httpStatus: status, details: data };
+  return err;
+}
+
+// Add returns operations to the same resolver so AppModule provider registration remains valid.
 @Resolver()
 export class OrdersResolver {
   private ordersBase = process.env.ORDERS_URL || 'http://127.0.0.1:4002';
@@ -53,11 +61,4 @@ export class OrdersResolver {
     const items = (res.data.items || []).map((o: any) => ({ ...o, createdAt: new Date(o.createdAt).toISOString() }));
     return { ...res.data, items };
   }
-}
-
-function mapHttpToGqlError(code: string, status: number, data: any): Error {
-  const message = data?.message || data?.error || 'Request failed';
-  const err = new Error(message);
-  (err as any).extensions = { code, httpStatus: status, details: data };
-  return err;
 }

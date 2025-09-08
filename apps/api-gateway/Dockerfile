@@ -23,8 +23,11 @@ COPY --from=deps /app/pnpm-workspace.yaml ./pnpm-workspace.yaml
 COPY tsconfig*.json ./
 COPY packages ./packages
 COPY apps/api-gateway ./apps/api-gateway
-# Build shared packages used at runtime, then the app
-RUN pnpm -r --filter=./packages/** build \
+# Build shared packages used at runtime, then the app (clean to avoid stale dist)
+RUN rm -rf apps/api-gateway/dist \
+  && pnpm -r --filter=./packages/** build \
+  # Ensure workspace deps are linked into app's node_modules
+  && pnpm -C apps/api-gateway install --silent \
   && pnpm -C apps/api-gateway build
 
 FROM node:20-alpine AS runner
@@ -32,6 +35,7 @@ ENV NODE_ENV=production
 ENV PNPM_HOME=/pnpm
 ENV PATH=$PNPM_HOME:$PATH
 RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+RUN apk add --no-cache curl
 WORKDIR /app
 COPY --from=build /app/apps/api-gateway/dist ./apps/api-gateway/dist
 COPY --from=build /app/apps/api-gateway/package.json ./apps/api-gateway/package.json

@@ -44,3 +44,43 @@ model Return {
   order Order @relation(fields: [orderId], references: [id])
   @@index([tenantId])
 }
+
+model Label {
+  id        String   @id @default(uuid())
+  tenantId  String
+  returnId  String   @unique
+  carrier   String
+  service   String
+  costCents Int
+  currency  String
+  objectKey String
+  createdAt DateTime @default(now())
+
+  @@index([tenantId])
+}
+
+model Outbox {
+  id          String   @id @default(uuid())
+  tenantId    String?
+  type        String
+  payload     Json
+  status      String   @default("pending") // pending|published|failed
+  attempts    Int      @default(0)
+  publishedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([status, createdAt])
+}
+
+model ScanAudit {
+  id        String   @id @default(uuid())
+  tenantId  String
+  returnId  String
+  userId    String?
+  deviceId  String?
+  event     String
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, createdAt])
+  @@index([returnId])
+}
