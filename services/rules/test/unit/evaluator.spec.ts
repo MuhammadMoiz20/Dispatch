@@ -15,9 +15,12 @@ describe('evaluator', () => {
   });
 
   it('guards against excessive depth', () => {
-    const deep: any = {}; let cur = deep;
-    for (let i = 0; i < 20; i++) { cur.all = [{}]; cur = cur.all[0]; }
+    const deep: any = {};
+    let cur = deep;
+    for (let i = 0; i < 20; i++) {
+      cur.all = [{}];
+      cur = cur.all[0];
+    }
     expect(() => evaluate(deep, {})).toThrow(/Max eval depth/);
   });
 });
-

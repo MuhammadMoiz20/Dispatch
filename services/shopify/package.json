@@ -1,0 +1,48 @@
+{
+  "name": "@dispatch/shopify",
+  "version": "0.1.0",
+  "private": true,
+  "main": "dist/main.js",
+  "types": "dist/main.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.build.json",
+    "predev": "prisma migrate deploy || prisma db push && prisma generate",
+    "dev": "ts-node-dev --respawn --transpile-only src/main.ts",
+    "pretest": "prisma generate",
+    "lint": "eslint . --ext .ts",
+    "prisma:generate": "prisma generate",
+    "prisma:migrate": "prisma migrate dev",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch"
+  },
+  "dependencies": {
+    "@dispatch/config": "workspace:*",
+    "@dispatch/idempotency": "workspace:*",
+    "@dispatch/logger": "workspace:*",
+    "@dispatch/telemetry": "workspace:*",
+    "@nestjs/common": "^10.0.0",
+    "@nestjs/core": "^10.0.0",
+    "@nestjs/platform-express": "^10.0.0",
+    "@prisma/client": "^5.16.2",
+    "axios": "^1.7.7",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.1",
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2",
+    "prom-client": "^15.1.3",
+    "reflect-metadata": "^0.2.2",
+    "dotenv": "^16.4.5"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/express": "^4.17.21",
+    "@types/jest": "^29.5.12",
+    "@types/jsonwebtoken": "^9.0.10",
+    "jest": "^29.7.0",
+    "prisma": "^5.16.2",
+    "supertest": "^6.3.3",
+    "ts-jest": "^29.1.1",
+    "ts-node-dev": "^2.0.0",
+    "typescript": "^5.5.4"
+  }
+}

@@ -27,7 +27,10 @@ export default function Webhooks() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql', []);
+  const apiUrl = useMemo(
+    () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql',
+    [],
+  );
 
   useEffect(() => {
     const t = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -50,7 +53,15 @@ export default function Webhooks() {
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ query, variables: { page: p, pageSize, status: status || undefined, endpointId: endpointId || undefined } }),
+        body: JSON.stringify({
+          query,
+          variables: {
+            page: p,
+            pageSize,
+            status: status || undefined,
+            endpointId: endpointId || undefined,
+          },
+        }),
       });
       const json = await res.json();
       if (json.errors?.length) throw new Error(json.errors[0].message);
@@ -75,7 +86,11 @@ export default function Webhooks() {
       void fetchDeliveries();
     });
     return () => {
-      try { dispose(); } catch {}
+      try {
+        dispose();
+      } catch (e) {
+        console.error(e);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -100,81 +115,113 @@ export default function Webhooks() {
   }
 
   return (
-    <main style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Webhooks</h1>
-        <button
-          onClick={() => {
-            localStorage.removeItem('token');
-            router.replace('/login');
-          }}
-        >
-          Logout
-        </button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Webhooks</h1>
       </div>
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ marginRight: 8 }}>
-          Status:
-          <input value={status} onChange={(e) => setStatus(e.target.value)} placeholder="pending/delivered/etc" style={{ marginLeft: 4 }} />
-        </label>
-        <label style={{ marginRight: 8 }}>
-          Endpoint ID:
-          <input value={endpointId} onChange={(e) => setEndpointId(e.target.value)} placeholder="endpoint id" style={{ marginLeft: 4 }} />
-        </label>
-        <button onClick={() => fetchDeliveries({ page: 1 })} disabled={loading}>
-          Apply
-        </button>
+      <div className="card">
+        <div className="card-body flex flex-wrap items-end gap-3">
+          <label className="text-sm">
+            <span className="text-gray-600 dark:text-gray-300">Status</span>
+            <input
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              placeholder="pending/delivered/etc"
+              className="mt-1 ml-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-gray-600 dark:text-gray-300">Endpoint ID</span>
+            <input
+              value={endpointId}
+              onChange={(e) => setEndpointId(e.target.value)}
+              placeholder="endpoint id"
+              className="mt-1 ml-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1"
+            />
+          </label>
+          <button
+            onClick={() => fetchDeliveries({ page: 1 })}
+            disabled={loading}
+            className="btn-primary"
+          >
+            Apply
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div style={{ color: 'red', marginBottom: 12 }}>Error: {error}</div>
+        <div className="card">
+          <div className="card-body text-red-600">Error: {error}</div>
+        </div>
       )}
 
-      <table border={1} cellPadding={8} cellSpacing={0} style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Endpoint</th>
-            <th>Event</th>
-            <th>Status</th>
-            <th>Attempts</th>
-            <th>Resp</th>
-            <th>Next Attempt</th>
-            <th>Created</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((d) => (
-            <tr key={d.id}>
-              <td>{d.id}</td>
-              <td>{d.endpointId}</td>
-              <td>{d.eventType}</td>
-              <td>{d.status}</td>
-              <td>{d.attempts}</td>
-              <td>{d.responseStatus ?? '-'}</td>
-              <td>{d.nextAttemptAt ? new Date(d.nextAttemptAt).toLocaleString() : '-'}</td>
-              <td>{new Date(d.createdAt).toLocaleString()}</td>
-              <td>
-                <button onClick={() => replay(d.id)} disabled={loading}>
-                  Replay
-                </button>
-              </td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
-      <div style={{ marginTop: 12, display: 'flex', gap: 8, alignItems: 'center' }}>
-        <button disabled={page <= 1 || loading} onClick={() => fetchDeliveries({ page: page - 1 })}>
+      <div className="card">
+        <div className="card-body overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-gray-600 dark:text-gray-300">
+                <th className="py-2">ID</th>
+                <th className="py-2">Endpoint</th>
+                <th className="py-2">Event</th>
+                <th className="py-2">Status</th>
+                <th className="py-2">Attempts</th>
+                <th className="py-2">Resp</th>
+                <th className="py-2">Next Attempt</th>
+                <th className="py-2">Created</th>
+                <th className="py-2">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map((d) => (
+                <tr key={d.id} className="border-t border-gray-100 dark:border-gray-800">
+                  <td className="py-2 font-mono text-xs">{d.id}</td>
+                  <td className="py-2">{d.endpointId}</td>
+                  <td className="py-2">{d.eventType}</td>
+                  <td className="py-2">
+                    <span className="inline-flex items-center px-2 py-0.5 rounded bg-gray-100 dark:bg-gray-800 text-gray-800 dark:text-gray-200">
+                      {d.status}
+                    </span>
+                  </td>
+                  <td className="py-2">{d.attempts}</td>
+                  <td className="py-2">{d.responseStatus ?? '-'}</td>
+                  <td className="py-2">
+                    {d.nextAttemptAt ? new Date(d.nextAttemptAt).toLocaleString() : '-'}
+                  </td>
+                  <td className="py-2">{new Date(d.createdAt).toLocaleString()}</td>
+                  <td className="py-2">
+                    <button
+                      onClick={() => replay(d.id)}
+                      disabled={loading}
+                      className="btn-secondary"
+                    >
+                      Replay
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div className="flex items-center gap-3">
+        <button
+          disabled={page <= 1 || loading}
+          onClick={() => fetchDeliveries({ page: page - 1 })}
+          className="btn-secondary"
+        >
           Prev
         </button>
-        <span>
+        <span className="text-sm text-gray-600 dark:text-gray-300">
           Page {page} / {totalPages} ({total} total)
         </span>
-        <button disabled={page >= totalPages || loading} onClick={() => fetchDeliveries({ page: page + 1 })}>
+        <button
+          disabled={page >= totalPages || loading}
+          onClick={() => fetchDeliveries({ page: page + 1 })}
+          className="btn-secondary"
+        >
           Next
         </button>
       </div>
-    </main>
+    </div>
   );
 }

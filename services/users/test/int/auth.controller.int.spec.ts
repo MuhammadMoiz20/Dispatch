@@ -31,7 +31,12 @@ describe('AuthController (int with mocked Prisma)', () => {
   it('POST /v1/auth/signup returns 201 payload', async () => {
     (prismaMock.user.findUnique as any).mockResolvedValueOnce(null);
     (prismaMock.tenant.create as any).mockResolvedValue({ id: 't1', name: 'Acme' });
-    (prismaMock.user.create as any).mockResolvedValue({ id: 'u1', tenantId: 't1', email: 'a@b.com', role: 'owner' });
+    (prismaMock.user.create as any).mockResolvedValue({
+      id: 'u1',
+      tenantId: 't1',
+      email: 'a@b.com',
+      role: 'owner',
+    });
     (prismaMock.authCredential.create as any).mockResolvedValue({ id: 'c1' });
 
     const res = await request(app.getHttpServer())
@@ -46,8 +51,16 @@ describe('AuthController (int with mocked Prisma)', () => {
   it('POST /v1/auth/login returns 200 payload', async () => {
     const bcrypt = require('bcryptjs');
     const hash = await bcrypt.hash('password123', 10);
-    (prismaMock.user.findUnique as any).mockResolvedValue({ id: 'u1', tenantId: 't1', email: 'a@b.com', role: 'owner' });
-    (prismaMock.authCredential.findUnique as any).mockResolvedValue({ userId: 'u1', passwordHash: hash });
+    (prismaMock.user.findUnique as any).mockResolvedValue({
+      id: 'u1',
+      tenantId: 't1',
+      email: 'a@b.com',
+      role: 'owner',
+    });
+    (prismaMock.authCredential.findUnique as any).mockResolvedValue({
+      userId: 'u1',
+      passwordHash: hash,
+    });
 
     const res = await request(app.getHttpServer())
       .post('/v1/auth/login')
@@ -58,4 +71,3 @@ describe('AuthController (int with mocked Prisma)', () => {
     expect(typeof res.body.token).toBe('string');
   });
 });
-

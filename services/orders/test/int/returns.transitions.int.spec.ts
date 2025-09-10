@@ -42,4 +42,3 @@ describe('ReturnsController transitions (int, mocked Prisma)', () => {
     expect(res.status).toBe(400);
   });
 });
-

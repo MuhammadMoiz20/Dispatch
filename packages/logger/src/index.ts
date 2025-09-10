@@ -13,4 +13,3 @@ export function httpLogger() {
     customProps: (_req, res) => ({ tenant_id: (res as any).locals?.tenant_id }),
   });
 }
-

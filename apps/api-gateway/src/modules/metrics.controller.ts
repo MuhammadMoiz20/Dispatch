@@ -1,6 +1,6 @@
 import { Controller, Get, Res } from '@nestjs/common';
 import type { Response } from 'express';
-import { Counter, Gauge, Registry, collectDefaultMetrics } from 'prom-client';
+import { Gauge, Registry, collectDefaultMetrics } from 'prom-client';
 
 export const registry = new Registry();
 if (process.env.NODE_ENV !== 'test') {
@@ -21,4 +21,3 @@ export class MetricsController {
     return res.send(await registry.metrics());
   }
 }
-

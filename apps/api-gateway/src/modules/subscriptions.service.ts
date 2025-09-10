@@ -35,33 +35,51 @@ export class SubscriptionsService implements OnModuleInit, OnModuleDestroy {
   async onModuleInit() {
     // Bridge RMQ -> PubSub topics
     try {
-      await this.mq.subscribe<OrderCreatedEvent>('order.created', async (msg: OrderCreatedEvent) => {
-        await this.pubsub.publish('order.created', { orderCreated: msg });
-      });
+      await this.mq.subscribe<OrderCreatedEvent>(
+        'order.created',
+        async (msg: OrderCreatedEvent) => {
+          await this.pubsub.publish('order.created', { orderCreated: msg });
+        },
+      );
     } catch (e) {
       this.logger.error(`Failed to subscribe to order.created: ${(e as any)?.message || e}`);
     }
     try {
-      await this.mq.subscribe<ReturnUpdatedEvent>('return.state_changed', async (msg: ReturnUpdatedEvent) => {
-        await this.pubsub.publish('return.updated', { returnUpdated: msg });
-      });
+      await this.mq.subscribe<ReturnUpdatedEvent>(
+        'return.state_changed',
+        async (msg: ReturnUpdatedEvent) => {
+          await this.pubsub.publish('return.updated', { returnUpdated: msg });
+        },
+      );
     } catch (e) {
       this.logger.error(`Failed to subscribe to return.state_changed: ${(e as any)?.message || e}`);
     }
     try {
       await this.mq.subscribe<any>('return.label_generated', async (msg: any) => {
-        const event: ReturnUpdatedEvent = { returnId: msg.returnId, state: 'label_generated', at: msg.at, tenantId: msg.tenantId };
+        const event: ReturnUpdatedEvent = {
+          returnId: msg.returnId,
+          state: 'label_generated',
+          at: msg.at,
+          tenantId: msg.tenantId,
+        };
         await this.pubsub.publish('return.updated', { returnUpdated: event });
       });
     } catch (e) {
-      this.logger.error(`Failed to subscribe to return.label_generated: ${(e as any)?.message || e}`);
+      this.logger.error(
+        `Failed to subscribe to return.label_generated: ${(e as any)?.message || e}`,
+      );
     }
     try {
-      await this.mq.subscribe<WebhookDeliveryUpdatedEvent>('webhook.delivery_updated', async (msg: WebhookDeliveryUpdatedEvent) => {
-        await this.pubsub.publish('webhook.delivery_updated', { webhookDeliveryUpdated: msg });
-      });
+      await this.mq.subscribe<WebhookDeliveryUpdatedEvent>(
+        'webhook.delivery_updated',
+        async (msg: WebhookDeliveryUpdatedEvent) => {
+          await this.pubsub.publish('webhook.delivery_updated', { webhookDeliveryUpdated: msg });
+        },
+      );
     } catch (e) {
-      this.logger.error(`Failed to subscribe to webhook.delivery_updated: ${(e as any)?.message || e}`);
+      this.logger.error(
+        `Failed to subscribe to webhook.delivery_updated: ${(e as any)?.message || e}`,
+      );
     }
   }
 
@@ -73,4 +91,3 @@ export class SubscriptionsService implements OnModuleInit, OnModuleDestroy {
     return this.pubsub.asyncIterator<T>(trigger);
   }
 }
-

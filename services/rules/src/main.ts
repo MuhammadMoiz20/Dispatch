@@ -21,7 +21,10 @@ class HealthController {
   }
 }
 
-@Module({ controllers: [HealthController, RulesController, MetricsController], providers: [PrismaService, RulesService, OutboxWorker] })
+@Module({
+  controllers: [HealthController, RulesController, MetricsController],
+  providers: [PrismaService, RulesService, OutboxWorker],
+})
 class AppModule {}
 
 async function bootstrap() {
@@ -48,7 +51,8 @@ async function bootstrap() {
         const [scheme, token] = auth.split(' ');
         if ((scheme || '').toLowerCase() === 'bearer' && token) {
           const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret');
-          if (decoded?.tenantId) (res as any).locals = { ...(res as any).locals, tenant_id: decoded.tenantId };
+          if (decoded?.tenantId)
+            (res as any).locals = { ...(res as any).locals, tenant_id: decoded.tenantId };
         }
       }
     } catch {}

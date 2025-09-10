@@ -16,7 +16,14 @@ describe('OrdersResolver', () => {
       status: 200,
       data: {
         items: [
-          { id: 'o1', channel: 'shopify', externalId: 'E1', status: 'created', createdAt: '2020-01-01', itemsCount: 2 },
+          {
+            id: 'o1',
+            channel: 'shopify',
+            externalId: 'E1',
+            status: 'created',
+            createdAt: '2020-01-01',
+            itemsCount: 2,
+          },
         ],
         page: 2,
         pageSize: 10,
@@ -34,4 +41,3 @@ describe('OrdersResolver', () => {
     });
   });
 });
-

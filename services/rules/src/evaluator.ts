@@ -9,7 +9,24 @@ export interface EvalOptions {
 }
 
 const defaultAllowed = new Set([
-  'var', 'all', 'any', 'and', 'or', '!', '==', '!=', '>', '>=', '<', '<=', '+', '-', '*', '/', 'in', 'contains'
+  'var',
+  'all',
+  'any',
+  'and',
+  'or',
+  '!',
+  '==',
+  '!=',
+  '>',
+  '>=',
+  '<',
+  '<=',
+  '+',
+  '-',
+  '*',
+  '/',
+  'in',
+  'contains',
 ]);
 
 export function evaluate(rule: JsonValue, context: Context, opts: EvalOptions = {}): any {
@@ -35,7 +52,9 @@ export function evaluate(rule: JsonValue, context: Context, opts: EvalOptions = 
     const op = keys[0];
     if (!allowedOps.has(op)) throw new Error(`Operator not allowed: ${op}`);
     const args = (node as any)[op];
-    const vals = Array.isArray(args) ? args.map((a) => evalNode(a, depth + 1)) : [evalNode(args, depth + 1)];
+    const vals = Array.isArray(args)
+      ? args.map((a) => evalNode(a, depth + 1))
+      : [evalNode(args, depth + 1)];
 
     switch (op) {
       case 'var': {
@@ -90,4 +109,3 @@ export function evaluate(rule: JsonValue, context: Context, opts: EvalOptions = 
 
   return !!evalNode(rule, 0);
 }
-

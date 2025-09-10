@@ -3,17 +3,8 @@
   "compilerOptions": {
     "outDir": "dist",
     "emitDecoratorMetadata": true,
-  "experimentalDecorators": true,
-  "types": ["node", "jest"],
-  "paths": {
-    "@dispatch/config": ["packages/config/src"],
-    "@dispatch/logger": ["packages/logger/src"],
-    "@dispatch/messaging": ["packages/messaging/src"],
-    "@dispatch/idempotency": ["packages/idempotency/src"],
-    "@dispatch/webhooks-core": ["packages/webhooks-core/src"],
-    "@dispatch/workflows": ["packages/workflows/src"],
-    "@dispatch/telemetry": ["packages/telemetry/src"]
-  }
+    "experimentalDecorators": true,
+    "types": ["node"]
   },
-  "include": ["src", "test", "test/**/*.ts"]
+  "include": ["src"]
 }

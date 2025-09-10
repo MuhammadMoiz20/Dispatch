@@ -21,7 +21,9 @@ export class ReturnsResolver {
 
   @Query(() => ReturnGql, { nullable: true })
   async returnById(@Args('id') id: string): Promise<ReturnGql | null> {
-    const res = await axios.get(`${this.ordersBase}/v1/returns/${id}`, { validateStatus: () => true });
+    const res = await axios.get(`${this.ordersBase}/v1/returns/${id}`, {
+      validateStatus: () => true,
+    });
     if (res.status === 404) return null;
     if (res.status >= 400) throw mapHttpToGqlError('RETURN_FETCH_FAILED', res.status, res.data);
     const r = res.data;

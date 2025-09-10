@@ -33,8 +33,16 @@ describe('AuthController (integration with Postgres)', () => {
 
     // Apply migrations and generate client.
     // Important: perform generate before importing any module that references @prisma/client
-    execSync('npx prisma generate', { cwd: serviceCwd, stdio: 'inherit', env: { ...process.env, DATABASE_URL: url } });
-    execSync('npx prisma migrate deploy', { cwd: serviceCwd, stdio: 'inherit', env: { ...process.env, DATABASE_URL: url } });
+    execSync('npx prisma generate', {
+      cwd: serviceCwd,
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: url },
+    });
+    execSync('npx prisma migrate deploy', {
+      cwd: serviceCwd,
+      stdio: 'inherit',
+      env: { ...process.env, DATABASE_URL: url },
+    });
 
     // Lazily import classes after prisma client has been generated
     ({ AuthController: AuthControllerCls } = await import('../../src/auth.controller'));

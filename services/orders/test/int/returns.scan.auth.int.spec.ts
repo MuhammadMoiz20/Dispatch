@@ -32,16 +32,33 @@ describe('Returns scan endpoint auth (int, mocked Prisma)', () => {
   beforeEach(() => jest.resetAllMocks());
 
   it('rejects scan without Authorization', async () => {
-    (prismaMock.return.findUnique as any).mockResolvedValue({ id: 'r1', tenantId: 't1', state: 'label_generated' });
+    (prismaMock.return.findUnique as any).mockResolvedValue({
+      id: 'r1',
+      tenantId: 't1',
+      state: 'label_generated',
+    });
     const res = await request(app.getHttpServer()).post('/v1/returns/r1/scan');
     expect(res.status).toBe(401);
   });
 
   it('accepts scan with warehouse role', async () => {
-    (prismaMock.return.findUnique as any).mockResolvedValue({ id: 'r1', tenantId: 't1', state: 'label_generated' });
-    (prismaMock.return.update as any).mockResolvedValue({ id: 'r1', state: 'in_transit', tenantId: 't1' });
-    const token = jwt.sign({ sub: 'u1', tenantId: 't1', role: 'warehouse' }, process.env.JWT_SECRET || 'dev-secret');
-    const res = await request(app.getHttpServer()).post('/v1/returns/r1/scan').set('Authorization', `Bearer ${token}`);
+    (prismaMock.return.findUnique as any).mockResolvedValue({
+      id: 'r1',
+      tenantId: 't1',
+      state: 'label_generated',
+    });
+    (prismaMock.return.update as any).mockResolvedValue({
+      id: 'r1',
+      state: 'in_transit',
+      tenantId: 't1',
+    });
+    const token = jwt.sign(
+      { sub: 'u1', tenantId: 't1', role: 'warehouse' },
+      process.env.JWT_SECRET || 'dev-secret',
+    );
+    const res = await request(app.getHttpServer())
+      .post('/v1/returns/r1/scan')
+      .set('Authorization', `Bearer ${token}`);
     expect(res.status).toBe(200);
     expect(res.body).toEqual({ id: 'r1', state: 'in_transit' });
   });

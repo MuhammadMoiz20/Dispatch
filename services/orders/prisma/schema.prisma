@@ -8,27 +8,28 @@ datasource db {
 }
 
 model Order {
-  id         String   @id @default(uuid())
+  id         String      @id @default(uuid())
   tenantId   String
   channel    String
   externalId String
-  status     String   @default("created")
-  createdAt  DateTime @default(now())
+  status     String      @default("created")
+  createdAt  DateTime    @default(now())
   items      OrderItem[]
   returns    Return[]
+  payments   Payment[]
 
+  @@unique([tenantId, channel, externalId])
   @@index([tenantId])
   @@index([tenantId, createdAt])
   @@index([tenantId, status])
   @@index([tenantId, channel])
-  @@unique([tenantId, channel, externalId])
 }
 
 model OrderItem {
-  id        String  @id @default(uuid())
-  orderId   String
-  sku       String
-  quantity  Int
+  id       String @id @default(uuid())
+  orderId  String
+  sku      String
+  quantity Int
 
   order Order @relation(fields: [orderId], references: [id])
 }
@@ -41,7 +42,9 @@ model Return {
   state     String   @default("initiated")
   createdAt DateTime @default(now())
 
-  order Order @relation(fields: [orderId], references: [id])
+  order   Order    @relation(fields: [orderId], references: [id])
+  refunds Refund[]
+
   @@index([tenantId])
 }
 
@@ -59,15 +62,67 @@ model Label {
   @@index([tenantId])
 }
 
-model Outbox {
+// Payment captured for an order (to enable refunds)
+model Payment {
   id          String   @id @default(uuid())
+  tenantId    String
+  orderId     String
+  provider    String // e.g., stripe, shopify_payments
+  chargeId    String // provider-specific payment/charge id
+  amountCents Int
+  currency    String
+  createdAt   DateTime @default(now())
+
+  order Order @relation(fields: [orderId], references: [id])
+
+  @@unique([tenantId, provider, chargeId])
+  @@index([tenantId])
+}
+
+// Refund requests against a return/payment
+model Refund {
+  id               String   @id @default(uuid())
+  tenantId         String
+  returnId         String
+  paymentId        String?
+  provider         String // e.g., stripe, shopify_payments
+  externalRefundId String? // provider refund id
+  amountCents      Int
+  currency         String
+  status           String   @default("pending") // pending|succeeded|failed
+  reason           String?
+  error            String?
+  idempotencyKey   String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  return Return @relation(fields: [returnId], references: [id])
+
+  @@index([tenantId])
+  @@index([tenantId, status])
+  @@index([returnId])
+}
+
+// Merchant carrier credentials (store tokens securely in production)
+model CarrierCredential {
+  id        String   @id @default(uuid())
+  tenantId  String
+  provider  String // easypost|shippo|mock
+  apiKey    String // NOTE: plaintext in dev; use KMS/vault in prod
+  createdAt DateTime @default(now())
+
+  @@index([tenantId, provider])
+}
+
+model Outbox {
+  id          String    @id @default(uuid())
   tenantId    String?
   type        String
   payload     Json
-  status      String   @default("pending") // pending|published|failed
-  attempts    Int      @default(0)
+  status      String    @default("pending") // pending|published|failed
+  attempts    Int       @default(0)
   publishedAt DateTime?
-  createdAt   DateTime @default(now())
+  createdAt   DateTime  @default(now())
 
   @@index([status, createdAt])
 }

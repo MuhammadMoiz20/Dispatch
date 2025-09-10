@@ -8,7 +8,9 @@ function enqueueOffline(id: string) {
     const cur = JSON.parse(localStorage.getItem(key) || '[]') as string[];
     cur.push(id);
     localStorage.setItem(key, JSON.stringify(cur));
-  } catch {}
+  } catch (e) {
+    // ignore storage failures
+  }
 }
 
 async function drainOffline(apiUrl: string, token: string) {
@@ -25,16 +27,21 @@ async function drainOffline(apiUrl: string, token: string) {
           body: JSON.stringify({ query: mutation, variables: { id } }),
         });
         if (!res.ok) throw new Error('Failed');
-      } catch {
+      } catch (e) {
         next.push(id);
       }
     }
     localStorage.setItem(key, JSON.stringify(next));
-  } catch {}
+  } catch (e) {
+    // ignore storage failures
+  }
 }
 
 export default function Scan() {
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql', []);
+  const apiUrl = useMemo(
+    () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql',
+    [],
+  );
   const [token, setToken] = useState<string | null>(null);
   const [input, setInput] = useState('');
   const [last, setLast] = useState<Return | null>(null);
@@ -82,7 +89,9 @@ export default function Scan() {
 
   async function startCamera() {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: 'environment' },
+      });
       if (!videoRef.current) return;
       videoRef.current.srcObject = stream;
       await videoRef.current.play();
@@ -105,7 +114,9 @@ export default function Scan() {
               }
             }
           }
-        } catch {}
+        } catch (e) {
+          // ignore frame decode errors
+        }
         requestAnimationFrame(tick);
       };
       requestAnimationFrame(tick);
@@ -119,7 +130,9 @@ export default function Scan() {
       <h1>Scanner</h1>
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <div style={{ marginBottom: 12 }}>
-        <button onClick={startCamera} disabled={usingCamera}>Use Camera</button>
+        <button onClick={startCamera} disabled={usingCamera}>
+          Use Camera
+        </button>
       </div>
       <div>
         <video ref={videoRef} style={{ width: 320, height: 240, background: '#000' }} />
@@ -127,16 +140,31 @@ export default function Scan() {
       <div style={{ marginTop: 12 }}>
         <label>
           Manual Return ID:
-          <input style={{ marginLeft: 8 }} value={input} onChange={(e) => setInput(e.target.value)} />
+          <input
+            style={{ marginLeft: 8 }}
+            value={input}
+            onChange={(e) => setInput(e.target.value)}
+          />
         </label>
-        <button style={{ marginLeft: 8 }} onClick={() => { if (input) { void scan(input); setInput(''); } }}>Scan</button>
+        <button
+          style={{ marginLeft: 8 }}
+          onClick={() => {
+            if (input) {
+              void scan(input);
+              setInput('');
+            }
+          }}
+        >
+          Scan
+        </button>
       </div>
       {last && (
         <div style={{ marginTop: 16 }}>
-          <p><strong>Last:</strong> {last.id} → {last.state}</p>
+          <p>
+            <strong>Last:</strong> {last.id} → {last.state}
+          </p>
         </div>
       )}
     </main>
   );
 }
-

@@ -28,7 +28,8 @@ export class RulesService {
   getTenantIdFromAuth(authHeader?: string): string {
     if (!authHeader) throw new UnauthorizedException('Missing Authorization');
     const [scheme, token] = authHeader.split(' ');
-    if (scheme?.toLowerCase() !== 'bearer' || !token) throw new UnauthorizedException('Invalid Authorization');
+    if (scheme?.toLowerCase() !== 'bearer' || !token)
+      throw new UnauthorizedException('Invalid Authorization');
     try {
       const decoded = jwt.verify(token, DEFAULT_SECRET) as any;
       const tenantId = decoded?.tenantId;
@@ -41,7 +42,10 @@ export class RulesService {
 
   async listRules(tenantId: string): Promise<RuleRecord[]> {
     const rows = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
-      tx.rule.findMany({ where: { tenantId }, orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }] }),
+      tx.rule.findMany({
+        where: { tenantId },
+        orderBy: [{ priority: 'asc' }, { createdAt: 'desc' }],
+      }),
     );
     return rows as any;
   }
@@ -52,26 +56,50 @@ export class RulesService {
     return r as any;
   }
 
-  async createRule(tenantId: string, input: { name: string; enabled?: boolean; condition: any; actions: any[]; priority?: number }) {
+  async createRule(
+    tenantId: string,
+    input: { name: string; enabled?: boolean; condition: any; actions: any[]; priority?: number },
+  ) {
     const r = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
       tx.rule.create({
-        data: { tenantId, name: input.name, enabled: input.enabled ?? true, condition: input.condition, actions: input.actions, priority: input.priority ?? 100 },
+        data: {
+          tenantId,
+          name: input.name,
+          enabled: input.enabled ?? true,
+          condition: input.condition,
+          actions: input.actions,
+          priority: input.priority ?? 100,
+        },
       }),
     );
     return r as any;
   }
 
-  async updateRule(tenantId: string, id: string, input: Partial<{ name: string; enabled: boolean; condition: any; actions: any[]; priority: number }>) {
+  async updateRule(
+    tenantId: string,
+    id: string,
+    input: Partial<{
+      name: string;
+      enabled: boolean;
+      condition: any;
+      actions: any[];
+      priority: number;
+    }>,
+  ) {
     const existing = await (this.prisma as any).rule.findUnique({ where: { id } });
     if (!existing || existing.tenantId !== tenantId) throw new UnauthorizedException('Not found');
-    const r = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) => tx.rule.update({ where: { id }, data: input }));
+    const r = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
+      tx.rule.update({ where: { id }, data: input }),
+    );
     return r as any;
   }
 
   async deleteRule(tenantId: string, id: string) {
     const existing = await (this.prisma as any).rule.findUnique({ where: { id } });
     if (!existing || existing.tenantId !== tenantId) return { ok: false };
-    await (this.prisma as any).runWithTenant(tenantId, async (tx: any) => tx.rule.delete({ where: { id } }));
+    await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
+      tx.rule.delete({ where: { id } }),
+    );
     return { ok: true };
   }
 
@@ -85,8 +113,14 @@ export class RulesService {
         const ok = evaluate(rule.condition as any, context);
         if (ok) {
           triggered.push(rule as any);
-          await this.publish('rule.triggered', { tenantId, ruleId: rule.id, name: rule.name, at: new Date().toISOString(), contextSummary: summarizeContext(context) });
-          for (const action of (rule.actions as any[])) {
+          await this.publish('rule.triggered', {
+            tenantId,
+            ruleId: rule.id,
+            name: rule.name,
+            at: new Date().toISOString(),
+            contextSummary: summarizeContext(context),
+          });
+          for (const action of rule.actions as any[]) {
             await this.executeAction(action, { tenantId, context });
           }
         }
@@ -102,22 +136,40 @@ export class RulesService {
     if (!type) return;
     switch (type) {
       case 'approve_return':
-        await this.retry(async () => {
-          const id = env.context?.return?.id || action?.returnId;
-          if (!id) throw new Error('approve_return requires context.return.id');
-          await axios.post(`${this.ordersBase}/v1/returns/${id}/approve`);
-        }, 3, 200);
+        await this.retry(
+          async () => {
+            const id = env.context?.return?.id || action?.returnId;
+            if (!id) throw new Error('approve_return requires context.return.id');
+            await axios.post(`${this.ordersBase}/v1/returns/${id}/approve`);
+          },
+          3,
+          200,
+        );
         ruleActionsTotal.inc({ action: 'approve_return' });
-        await this.publish('rule.action.executed', { action: 'approve_return', tenantId: env.tenantId, at: new Date().toISOString(), returnId: env.context?.return?.id });
+        await this.publish('rule.action.executed', {
+          action: 'approve_return',
+          tenantId: env.tenantId,
+          at: new Date().toISOString(),
+          returnId: env.context?.return?.id,
+        });
         break;
       case 'issue_store_credit':
         // Stub: acknowledge action
         ruleActionsTotal.inc({ action: 'issue_store_credit' });
-        await this.publish('rule.action.executed', { action: 'issue_store_credit', tenantId: env.tenantId, at: new Date().toISOString() });
+        await this.publish('rule.action.executed', {
+          action: 'issue_store_credit',
+          tenantId: env.tenantId,
+          at: new Date().toISOString(),
+        });
         break;
       case 'notify':
         ruleActionsTotal.inc({ action: 'notify' });
-        await this.publish('rule.action.executed', { action: 'notify', tenantId: env.tenantId, at: new Date().toISOString(), to: action?.to });
+        await this.publish('rule.action.executed', {
+          action: 'notify',
+          tenantId: env.tenantId,
+          at: new Date().toISOString(),
+          to: action?.to,
+        });
         break;
       default:
         // unknown actions are ignored for now
@@ -140,14 +192,20 @@ export class RulesService {
 
   private async publish(queue: string, message: object) {
     try {
-      await (this.prisma as any).outbox.create({ data: { tenantId: (message as any)?.tenantId, type: queue, payload: message } });
+      await (this.prisma as any).outbox.create({
+        data: { tenantId: (message as any)?.tenantId, type: queue, payload: message },
+      });
     } catch {}
   }
 }
 
 function summarizeContext(ctx: any) {
   return {
-    return: ctx?.return ? { id: ctx.return.id, reason: ctx.return.reason, state: ctx.return.state } : undefined,
-    customer: ctx?.customer ? { id: ctx.customer.id, order_count: ctx.customer.order_count } : undefined,
+    return: ctx?.return
+      ? { id: ctx.return.id, reason: ctx.return.reason, state: ctx.return.state }
+      : undefined,
+    customer: ctx?.customer
+      ? { id: ctx.customer.id, order_count: ctx.customer.order_count }
+      : undefined,
   };
 }

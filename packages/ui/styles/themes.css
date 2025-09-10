@@ -1,0 +1,77 @@
+:root,
+[data-theme='default'] {
+  --color-bg: #0c1116;
+  --color-surface: #0f1620;
+  --color-elev-1: #141b26;
+  --color-elev-2: #192231;
+  --color-elev-stroke: #263245;
+  --color-text: #e8f0fa;
+  --color-text-dim: #a9b3c2;
+  --color-accent: #5fb3ff;
+  --color-accent-contrast: #0b111a;
+  --grad-accent: linear-gradient(135deg, #5fb3ff 0%, #9b7bff 100%);
+  --color-success: #31d0aa;
+  --color-success-ink: #07221c;
+  --color-warning: #ffcc66;
+  --color-warning-ink: #1f1603;
+  --color-danger: #ff6b6b;
+  --color-danger-ink: #20080a;
+  --focus-ring: 2px solid #5fb3ff;
+}
+
+[data-theme='acme'] {
+  --color-bg: #0b1020;
+  --color-surface: #0e1530;
+  --color-elev-1: #111a3b;
+  --color-elev-2: #14224f;
+  --color-elev-stroke: #1e2e6b;
+  --color-text: #e6ebff;
+  --color-text-dim: #a8b0d9;
+  --color-accent: #4e7bff;
+  --color-accent-contrast: #0b1020;
+  --grad-accent: linear-gradient(135deg, #4e7bff, #66d9ff);
+  --color-success: #29e0c2;
+  --color-success-ink: #021b18;
+  --color-warning: #ffd166;
+  --color-warning-ink: #271e04;
+  --color-danger: #ff6b8a;
+  --color-danger-ink: #2a0d17;
+}
+
+[data-theme='nova'] {
+  --color-bg: #120d17;
+  --color-surface: #171022;
+  --color-elev-1: #1d1530;
+  --color-elev-2: #251c3f;
+  --color-elev-stroke: #342a54;
+  --color-text: #f0eaff;
+  --color-text-dim: #b9abd9;
+  --color-accent: #b57aff;
+  --color-accent-contrast: #120d17;
+  --grad-accent: linear-gradient(135deg, #b57aff, #ff7ab5);
+  --color-success: #5ce2b8;
+  --color-success-ink: #0a1f16;
+  --color-warning: #ffc766;
+  --color-warning-ink: #2a1c05;
+  --color-danger: #ff6b9d;
+  --color-danger-ink: #2c0d1c;
+}
+
+[data-theme='orchid'] {
+  --color-bg: #0e1712;
+  --color-surface: #122019;
+  --color-elev-1: #15271f;
+  --color-elev-2: #193226;
+  --color-elev-stroke: #264638;
+  --color-text: #e9fff6;
+  --color-text-dim: #a7c9bb;
+  --color-accent: #26d07c;
+  --color-accent-contrast: #0e1712;
+  --grad-accent: linear-gradient(135deg, #26d07c, #26cfd0);
+  --color-success: #32e7a9;
+  --color-success-ink: #062019;
+  --color-warning: #ffd166;
+  --color-warning-ink: #231a06;
+  --color-danger: #ff7d7d;
+  --color-danger-ink: #2b0e0e;
+}

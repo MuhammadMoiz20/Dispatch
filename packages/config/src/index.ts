@@ -19,4 +19,3 @@ export function loadConfig(overrides?: Partial<NodeJS.ProcessEnv>): AppConfig {
   }
   return parsed.data;
 }
-

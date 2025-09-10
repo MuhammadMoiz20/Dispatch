@@ -7,4 +7,3 @@ export interface Messaging {
 }
 
 export { createRabbitMQ } from './rabbitmq';
-

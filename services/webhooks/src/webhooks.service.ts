@@ -4,7 +4,13 @@ import { PrismaService } from './prisma.service';
 import jwt from 'jsonwebtoken';
 import { createRabbitMQ } from '@dispatch/messaging';
 import { deliverWebhook } from '@dispatch/webhooks-core';
-import { webhookRetryTotal, successTotal, failureTotal, updateSuccessRateGauge, dlqDepthGauge } from './metrics.controller';
+import {
+  webhookRetryTotal,
+  successTotal,
+  failureTotal,
+  updateSuccessRateGauge,
+  dlqDepthGauge,
+} from './metrics.controller';
 
 const DEFAULT_SECRET = process.env.JWT_SECRET || 'dev-secret';
 const MAX_ATTEMPTS = 5;
@@ -30,7 +36,8 @@ export class WebhooksService {
   getTenantIdFromAuth(authHeader?: string): string {
     if (!authHeader) throw new UnauthorizedException('Missing Authorization');
     const [scheme, token] = authHeader.split(' ');
-    if (scheme?.toLowerCase() !== 'bearer' || !token) throw new UnauthorizedException('Invalid Authorization');
+    if (scheme?.toLowerCase() !== 'bearer' || !token)
+      throw new UnauthorizedException('Invalid Authorization');
     try {
       const decoded = jwt.verify(token, DEFAULT_SECRET) as any;
       const tenantId = decoded?.tenantId;
@@ -41,9 +48,14 @@ export class WebhooksService {
     }
   }
 
-  async createEndpoint(tenantId: string, input: { url: string; secret: string; enabled?: boolean }) {
+  async createEndpoint(
+    tenantId: string,
+    input: { url: string; secret: string; enabled?: boolean },
+  ) {
     const ep = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
-      tx.endpoint.create({ data: { tenantId, url: input.url, secret: input.secret, enabled: input.enabled ?? true } }),
+      tx.endpoint.create({
+        data: { tenantId, url: input.url, secret: input.secret, enabled: input.enabled ?? true },
+      }),
     );
     return { id: ep.id, url: ep.url, enabled: ep.enabled, createdAt: ep.createdAt };
   }
@@ -52,30 +64,48 @@ export class WebhooksService {
     const rows = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
       tx.endpoint.findMany({ where: { tenantId }, orderBy: { createdAt: 'desc' } }),
     );
-    return rows.map((e: { id: string; url: string; enabled: boolean; createdAt: Date }) => ({ id: e.id, url: e.url, enabled: e.enabled, createdAt: e.createdAt }));
+    return rows.map((e: { id: string; url: string; enabled: boolean; createdAt: Date }) => ({
+      id: e.id,
+      url: e.url,
+      enabled: e.enabled,
+      createdAt: e.createdAt,
+    }));
   }
 
   async getEndpoint(tenantId: string, id: string) {
-    const e = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) => tx.endpoint.findFirst({ where: { id, tenantId } }));
+    const e = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
+      tx.endpoint.findFirst({ where: { id, tenantId } }),
+    );
     if (!e) return null;
     return { id: e.id, url: e.url, enabled: e.enabled, createdAt: e.createdAt };
   }
 
-  async updateEndpoint(tenantId: string, id: string, input: Partial<{ url: string; secret: string; enabled: boolean }>) {
+  async updateEndpoint(
+    tenantId: string,
+    id: string,
+    input: Partial<{ url: string; secret: string; enabled: boolean }>,
+  ) {
     const existing = await (this.prisma as any).endpoint.findUnique({ where: { id } });
     if (!existing || existing.tenantId !== tenantId) throw new UnauthorizedException('Not found');
-    const e = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) => tx.endpoint.update({ where: { id }, data: input }));
+    const e = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
+      tx.endpoint.update({ where: { id }, data: input }),
+    );
     return { id: e.id, url: e.url, enabled: e.enabled, createdAt: e.createdAt };
   }
 
   async deleteEndpoint(tenantId: string, id: string) {
     const e = await (this.prisma as any).endpoint.findUnique({ where: { id } });
     if (!e || e.tenantId !== tenantId) return { ok: false };
-    await (this.prisma as any).runWithTenant(tenantId, async (tx: any) => tx.endpoint.delete({ where: { id } }));
+    await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
+      tx.endpoint.delete({ where: { id } }),
+    );
     return { ok: true };
   }
 
-  async listDeliveries(tenantId: string, query: { page?: number; pageSize?: number; status?: string; endpointId?: string }) {
+  async listDeliveries(
+    tenantId: string,
+    query: { page?: number; pageSize?: number; status?: string; endpointId?: string },
+  ) {
     const page = query.page ?? 1;
     const pageSize = query.pageSize ?? 20;
     const where: any = { tenantId };
@@ -84,7 +114,12 @@ export class WebhooksService {
     const [total, rows] = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
       (this.prisma as any).$transaction([
         tx.delivery.count({ where }),
-        tx.delivery.findMany({ where, orderBy: { createdAt: 'desc' }, skip: (page - 1) * pageSize, take: pageSize }),
+        tx.delivery.findMany({
+          where,
+          orderBy: { createdAt: 'desc' },
+          skip: (page - 1) * pageSize,
+          take: pageSize,
+        }),
       ]),
     );
     const items: DeliverySummary[] = rows.map((d: any) => ({
@@ -129,20 +164,35 @@ export class WebhooksService {
   }
 
   async processDelivery(deliveryId: string) {
-    const d = await (this.prisma as any).delivery.findUnique({ where: { id: deliveryId }, include: { endpoint: true } });
+    const d = await (this.prisma as any).delivery.findUnique({
+      where: { id: deliveryId },
+      include: { endpoint: true },
+    });
     if (!d) return;
     if (!d.endpoint?.enabled) {
-      await (this.prisma as any).delivery.update({ where: { id: d.id }, data: { status: 'dead', lastError: 'Endpoint disabled' } });
+      await (this.prisma as any).delivery.update({
+        where: { id: d.id },
+        data: { status: 'dead', lastError: 'Endpoint disabled' },
+      });
       return;
     }
     try {
       const payloadObj = (d as any).payload ?? {};
-      const res = await deliverWebhook({ url: d.endpoint.url, secret: d.endpoint.secret, payload: payloadObj as object });
+      const res = await deliverWebhook({
+        url: d.endpoint.url,
+        secret: d.endpoint.secret,
+        payload: payloadObj as object,
+      });
       const status = res?.status as number | undefined;
       if (status && status >= 200 && status < 300) {
         const updated = await (this.prisma as any).delivery.update({
           where: { id: d.id },
-          data: { status: 'delivered', attempts: d.attempts + 1, responseStatus: status, lastError: null },
+          data: {
+            status: 'delivered',
+            attempts: d.attempts + 1,
+            responseStatus: status,
+            lastError: null,
+          },
         });
         await this.emitDeliveryUpdated(updated);
         successTotal.inc();
@@ -157,13 +207,21 @@ export class WebhooksService {
         webhookRetryTotal.inc();
         const updated = await (this.prisma as any).delivery.update({
           where: { id: d.id },
-          data: { status: attempt >= MAX_ATTEMPTS ? 'dead' : 'retrying', attempts: attempt, responseStatus: status, nextAttemptAt: next },
+          data: {
+            status: attempt >= MAX_ATTEMPTS ? 'dead' : 'retrying',
+            attempts: attempt,
+            responseStatus: status,
+            nextAttemptAt: next,
+          },
         });
         await this.emitDeliveryUpdated(updated);
         if (updated.status !== 'dead') await this.scheduleDelivery(d.id, delay);
         else await this.updateDlqDepthGauge();
       } else {
-        const updated = await (this.prisma as any).delivery.update({ where: { id: d.id }, data: { status: 'failed', attempts: d.attempts + 1, responseStatus: status } });
+        const updated = await (this.prisma as any).delivery.update({
+          where: { id: d.id },
+          data: { status: 'failed', attempts: d.attempts + 1, responseStatus: status },
+        });
         await this.emitDeliveryUpdated(updated);
         failureTotal.inc();
         updateSuccessRateGauge();
@@ -175,7 +233,12 @@ export class WebhooksService {
       webhookRetryTotal.inc();
       const updated = await (this.prisma as any).delivery.update({
         where: { id: d.id },
-        data: { status: attempt >= MAX_ATTEMPTS ? 'dead' : 'retrying', attempts: attempt, lastError: err?.message || 'network', nextAttemptAt: next },
+        data: {
+          status: attempt >= MAX_ATTEMPTS ? 'dead' : 'retrying',
+          attempts: attempt,
+          lastError: err?.message || 'network',
+          nextAttemptAt: next,
+        },
       });
       await this.emitDeliveryUpdated(updated);
       if (updated.status !== 'dead') await this.scheduleDelivery(d.id, delay);
@@ -188,16 +251,18 @@ export class WebhooksService {
       tx.endpoint.findMany({ where: { tenantId: event.tenantId, enabled: true } }),
     );
     for (const ep of endpoints) {
-      const d = await (this.prisma as any).runWithTenant(event.tenantId, async (tx: any) => tx.delivery.create({
-        data: {
-          tenantId: event.tenantId,
-          endpointId: ep.id,
-          eventType: event.type,
-          payload: event.payload,
-          status: 'pending',
-          attempts: 0,
-        },
-      }));
+      const d = await (this.prisma as any).runWithTenant(event.tenantId, async (tx: any) =>
+        tx.delivery.create({
+          data: {
+            tenantId: event.tenantId,
+            endpointId: ep.id,
+            eventType: event.type,
+            payload: event.payload,
+            status: 'pending',
+            attempts: 0,
+          },
+        }),
+      );
       await this.scheduleDelivery(d.id);
     }
   }
@@ -220,10 +285,16 @@ export class WebhooksService {
   }
 
   async replayDelivery(tenantId: string, id: string) {
-    const d = await (this.prisma as any).delivery.findUnique({ where: { id }, include: { endpoint: true } });
+    const d = await (this.prisma as any).delivery.findUnique({
+      where: { id },
+      include: { endpoint: true },
+    });
     if (!d || d.tenantId !== tenantId) throw new UnauthorizedException('Not found');
     const updated = await (this.prisma as any).runWithTenant(tenantId, async (tx: any) =>
-      tx.delivery.update({ where: { id }, data: { status: 'pending', attempts: 0, nextAttemptAt: new Date() } }),
+      tx.delivery.update({
+        where: { id },
+        data: { status: 'pending', attempts: 0, nextAttemptAt: new Date() },
+      }),
     );
     await this.scheduleDelivery(updated.id);
     return { ok: true };

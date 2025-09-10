@@ -50,7 +50,9 @@ export class LabelsResolver {
 
   @Query(() => LabelGql, { nullable: true })
   async returnLabel(@Args('id') id: string): Promise<LabelGql | null> {
-    const res = await axios.get(`${this.ordersBase}/v1/returns/${id}/label`, { validateStatus: () => true });
+    const res = await axios.get(`${this.ordersBase}/v1/returns/${id}/label`, {
+      validateStatus: () => true,
+    });
     if (res.status === 404) return null;
     if (res.status >= 400) throw mapHttpToGqlError('LABEL_FETCH_FAILED', res.status, res.data);
     const l = res.data;
@@ -62,4 +64,3 @@ export class LabelsResolver {
     return this.returnLabel(returnId);
   }
 }
-

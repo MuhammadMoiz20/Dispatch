@@ -48,7 +48,7 @@ services:
         condition: service_healthy
     ports:
       - '14001:4001'
-    command: sh -c "pnpm -C services/users exec prisma migrate deploy || pnpm -C services/users exec prisma db push; node services/users/dist/main.js"
+    command: sh -c "pnpm -C services/users exec prisma migrate deploy; pnpm -C services/users exec prisma db push; node services/users/dist/services/users/src/main.js"
 
   orders:
     build:
@@ -89,17 +89,29 @@ services:
       - USERS_URL=http://users:4001
       - ORDERS_URL=http://orders:4002
       - WEBHOOKS_URL=http://webhooks:4003
+      - NOTIFICATIONS_URL=http://notifications:4006
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - DATABASE_URL=postgresql://dispatch:dispatch@postgres:5432/dispatch
       - JWT_SECRET=dev-secret
       - NODE_ENV=development
+      - REDIS_URL=redis://redis:6379
     depends_on:
       users:
         condition: service_started
       orders:
         condition: service_started
+      notifications:
+        condition: service_started
     ports:
       - '3000:3000'
     healthcheck:
-      test: ["CMD-SHELL", "curl -s -X POST http://localhost:3000/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{ health }\"}' | grep -q \"\\\"ok\\\"\""]
+      test:
+        [
+          'CMD-SHELL',
+          "curl -s -X POST http://localhost:3000/graphql -H 'Content-Type: application/json' -d '{\"query\":\"{ health }\"}' | grep -q \"\\\"ok\\\"\"",
+        ]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -125,7 +137,7 @@ services:
     # Ensure schema exists when there are no migrations: run db push in that case
     command: sh -c "if [ -d services/webhooks/prisma/migrations ] && [ \"$(ls -A services/webhooks/prisma/migrations 2>/dev/null)\" ]; then pnpm -C services/webhooks exec prisma migrate deploy; else pnpm -C services/webhooks exec prisma db push; fi; node services/webhooks/dist/main.js"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4003/health"]
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4003/health']
       interval: 5s
       timeout: 3s
       retries: 5
@@ -150,10 +162,122 @@ services:
       - '14004:4004'
     command: sh -c "pnpm -C services/rules exec prisma migrate deploy || pnpm -C services/rules exec prisma db push; node services/rules/dist/main.js"
     healthcheck:
-      test: ["CMD", "wget", "-qO-", "http://localhost:4004/health"]
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4004/health']
       interval: 5s
       timeout: 3s
       retries: 5
+
+  shopify:
+    build:
+      context: .
+      dockerfile: services/shopify/Dockerfile
+    environment:
+      - PORT=4005
+      - DATABASE_URL=postgresql://dispatch:dispatch@postgres:5432/dispatch?schema=shopify
+      - JWT_SECRET=dev-secret
+      - NODE_ENV=development
+      - ORDERS_URL=http://orders:4002
+      - SHOPIFY_APP_URL=http://localhost:14005
+      - SHOPIFY_API_KEY=your_api_key_here
+      - SHOPIFY_API_SECRET=your_api_secret_here
+      - SHOPIFY_SCOPES=read_orders
+      - SHOPIFY_API_VERSION=2024-07
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '14005:4005'
+    command: sh -c "pnpm -C services/shopify exec prisma migrate deploy || pnpm -C services/shopify exec prisma db push; node services/shopify/dist/main.js"
+    healthcheck:
+      test: ['CMD', 'wget', '-qO-', 'http://localhost:4005/health']
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  notifications:
+    build:
+      context: .
+      dockerfile: services/notifications/Dockerfile
+    environment:
+      - PORT=4006
+      - DATABASE_URL=postgresql://dispatch:dispatch@postgres:5432/dispatch?schema=notifications
+      - JWT_SECRET=dev-secret
+      - NODE_ENV=development
+      - EMAIL_PROVIDER=noop
+      - EMAIL_FROM=no-reply@dispatch.local
+      - POSTMARK_TOKEN=
+      - SENDGRID_API_KEY=
+      - TWILIO_ACCOUNT_SID=
+      - TWILIO_AUTH_TOKEN=
+      - TWILIO_FROM_NUMBER=
+    depends_on:
+      postgres:
+        condition: service_healthy
+    ports:
+      - '14006:4006'
+    command: sh -c "pnpm -C services/notifications exec prisma migrate deploy || pnpm -C services/notifications exec prisma db push; node services/notifications/dist/main.js"
+
+  # Analytics database for slice 14
+  clickhouse:
+    image: clickhouse/clickhouse-server:23.8
+    environment:
+      CLICKHOUSE_DB: analytics
+      CLICKHOUSE_DEFAULT_ACCESS_MANAGEMENT: '1'
+    ports:
+      - '8123:8123' # HTTP
+    volumes:
+      - chdata:/var/lib/clickhouse
+
+  # One-off init to apply schema (runs client against ClickHouse)
+  clickhouse-init:
+    image: clickhouse/clickhouse-server:23.8
+    depends_on:
+      - clickhouse
+    volumes:
+      - ./docs/slices/14-analytics/contracts/clickhouse.sql:/schema/clickhouse.sql:ro
+    entrypoint: ['/bin/sh', '-lc']
+    command: |
+      "until clickhouse-client --host clickhouse -q 'SELECT 1'; do echo waiting for clickhouse; sleep 1; done; \
+       clickhouse-client --host clickhouse -n < /schema/clickhouse.sql; echo 'analytics schema applied'"
+
+  analytics:
+    build:
+      context: .
+      dockerfile: services/analytics/Dockerfile
+    environment:
+      - PORT=4007
+      - NODE_ENV=development
+      - RABBITMQ_URL=amqp://rabbitmq:5672
+      - CLICKHOUSE_URL=http://clickhouse:8123
+      - CLICKHOUSE_USER=default
+      - CLICKHOUSE_PASSWORD=
+      - DATABASE_URL=postgresql://dispatch:dispatch@postgres:5432/dispatch
+      - ETL_SPOOL_DIR=/var/spool/analytics
+    depends_on:
+      rabbitmq:
+        condition: service_healthy
+      clickhouse:
+        condition: service_started
+      clickhouse-init:
+        condition: service_completed_successfully
+    ports:
+      - '14007:4007'
+    command: sh -c "node services/analytics/dist/main.js"
+    volumes:
+      - analytics_spool:/var/spool/analytics
+
+  merchant-dashboard:
+    build:
+      context: .
+      dockerfile: apps/merchant-dashboard/Dockerfile
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_API_URL=http://localhost:3000/graphql
+    depends_on:
+      api-gateway:
+        condition: service_started
+    ports:
+      - '3001:3001'
 
   minio:
     image: minio/minio:latest
@@ -171,3 +295,5 @@ volumes:
   pgdata: {}
   redisdata: {}
   miniodata: {}
+  chdata: {}
+  analytics_spool: {}

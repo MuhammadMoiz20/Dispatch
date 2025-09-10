@@ -5,7 +5,15 @@ jest.mock('axios', () => ({ post: jest.fn() }));
 import axios from 'axios';
 
 describe('RulesService actions', () => {
-  const prisma = { rule: { findMany: jest.fn(), create: jest.fn(), update: jest.fn(), findUnique: jest.fn(), delete: jest.fn() } } as any as PrismaService;
+  const prisma = {
+    rule: {
+      findMany: jest.fn(),
+      create: jest.fn(),
+      update: jest.fn(),
+      findUnique: jest.fn(),
+      delete: jest.fn(),
+    },
+  } as any as PrismaService;
   const svc = new (RulesService as any)(prisma);
 
   it('retries approve_return action up to attempts', async () => {
@@ -20,4 +28,3 @@ describe('RulesService actions', () => {
     expect(calls).toBe(3);
   });
 });
-

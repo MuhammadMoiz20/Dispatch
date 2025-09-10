@@ -40,4 +40,3 @@ describe('Orders OutboxWorker (int, mocked prisma)', () => {
     }
   });
 });
-

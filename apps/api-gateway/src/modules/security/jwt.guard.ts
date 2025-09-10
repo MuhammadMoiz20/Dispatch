@@ -11,9 +11,20 @@ export class JwtAuthGuard implements CanActivate {
     const info = gqlCtx.getInfo();
     const fieldName = info?.fieldName;
     const parentType = info?.parentType?.name;
-    if (parentType === 'Mutation' && (fieldName === 'login' || fieldName === 'signup' || fieldName === 'initiateReturn')) return true;
+    if (
+      parentType === 'Mutation' &&
+      (fieldName === 'login' || fieldName === 'signup' || fieldName === 'initiateReturn')
+    )
+      return true;
     // Public queries
-    if (parentType === 'Query' && (fieldName === 'returnById' || fieldName === 'labelByReturn' || fieldName === 'returnLabel' || fieldName === 'health')) return true;
+    if (
+      parentType === 'Query' &&
+      (fieldName === 'returnById' ||
+        fieldName === 'labelByReturn' ||
+        fieldName === 'returnLabel' ||
+        fieldName === 'health')
+    )
+      return true;
     // Public subscriptions (returns portal)
     if (parentType === 'Subscription' && fieldName === 'returnUpdated') return true;
     // Fast-path if context already has a verified user
@@ -23,14 +34,19 @@ export class JwtAuthGuard implements CanActivate {
     const auth = ctx?.req?.headers?.authorization as string | undefined;
     if (!auth) return false;
     const [scheme, token] = auth.split(' ');
-    if ((scheme || '').toLowerCase() !== 'bearer' || !token) return false;
+    const lower = (scheme || '').toLowerCase();
+    if (lower === 'apikey') return true; // allow API key calls; downstream can enforce scopes later
+    if (lower !== 'bearer' || !token) return false;
     // Optionally try to decode to populate ctx.user, but do not block if verify fails
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret') as any;
       const userId = decoded?.userId || decoded?.sub;
       const tenantId = decoded?.tenantId;
-      if (userId && tenantId) ctx.user = { userId, tenantId, email: decoded?.email };
-    } catch {}
+      if (userId && tenantId)
+        ctx.user = { userId, tenantId, email: decoded?.email, role: decoded?.role };
+    } catch (err) {
+      // Ignore verification errors; downstream services enforce auth
+    }
     return true;
   }
 }

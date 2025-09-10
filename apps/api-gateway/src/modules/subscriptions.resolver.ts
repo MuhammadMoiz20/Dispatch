@@ -75,4 +75,3 @@ export class SubscriptionsResolver {
     return this.subs.asyncIterator('return.updated');
   }
 }
-

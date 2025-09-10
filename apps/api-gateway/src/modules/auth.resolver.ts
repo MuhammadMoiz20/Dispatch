@@ -35,14 +35,18 @@ export class AuthResolver {
 
   @Mutation(() => AuthResult)
   async signup(@Args('input') input: SignupInput): Promise<AuthResult> {
-    const res = await axios.post(`${this.usersBase}/v1/auth/signup`, input, { validateStatus: () => true });
+    const res = await axios.post(`${this.usersBase}/v1/auth/signup`, input, {
+      validateStatus: () => true,
+    });
     if (res.status >= 400) throw mapHttpToGqlError('SIGNUP_FAILED', res.status, res.data);
     return res.data;
   }
 
   @Mutation(() => AuthResult)
   async login(@Args('input') input: LoginInput): Promise<AuthResult> {
-    const res = await axios.post(`${this.usersBase}/v1/auth/login`, input, { validateStatus: () => true });
+    const res = await axios.post(`${this.usersBase}/v1/auth/login`, input, {
+      validateStatus: () => true,
+    });
     if (res.status >= 400) throw mapHttpToGqlError('LOGIN_FAILED', res.status, res.data);
     return res.data;
   }

@@ -71,7 +71,10 @@ export function idempotencyMiddleware(opts: IdempotencyOptions = {}) {
       const statusToReturn = parsed.status === 201 ? 200 : parsed.status;
       // Signal that this response is a replay from idempotency cache
       res.setHeader('Idempotency-Replayed', 'true');
-      return res.status(statusToReturn).set(parsed.headers || {}).send(parsed.body);
+      return res
+        .status(statusToReturn)
+        .set(parsed.headers || {})
+        .send(parsed.body);
     }
 
     const originalSend = res.send.bind(res);

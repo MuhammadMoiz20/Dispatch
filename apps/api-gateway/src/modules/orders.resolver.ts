@@ -58,7 +58,10 @@ export class OrdersResolver {
     });
     if (res.status >= 400) throw mapHttpToGqlError('ORDERS_FETCH_FAILED', res.status, res.data);
     // Normalize createdAt to ISO string
-    const items = (res.data.items || []).map((o: any) => ({ ...o, createdAt: new Date(o.createdAt).toISOString() }));
+    const items = (res.data.items || []).map((o: any) => ({
+      ...o,
+      createdAt: new Date(o.createdAt).toISOString(),
+    }));
     return { ...res.data, items };
   }
 }

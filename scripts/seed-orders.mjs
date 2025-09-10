@@ -11,8 +11,16 @@
 */
 
 const API_URL = process.env.API_URL || 'http://localhost:3000/graphql';
-const USERS_BASE_DEFAULTS = [process.env.USERS_BASE, 'http://localhost:14001', 'http://localhost:4001'].filter(Boolean);
-const ORDERS_BASE_DEFAULTS = [process.env.ORDERS_BASE, 'http://localhost:14002', 'http://localhost:4002'].filter(Boolean);
+const USERS_BASE_DEFAULTS = [
+  process.env.USERS_BASE,
+  'http://localhost:14001',
+  'http://localhost:4001',
+].filter(Boolean);
+const ORDERS_BASE_DEFAULTS = [
+  process.env.ORDERS_BASE,
+  'http://localhost:14002',
+  'http://localhost:4002',
+].filter(Boolean);
 
 async function httpJson(url, opts = {}) {
   const res = await fetch(url, {
@@ -64,7 +72,7 @@ async function ensureUser(email, password) {
   }
   // Try signup
   try {
-    const tenantName = email.split('@')[0] + "-tenant";
+    const tenantName = email.split('@')[0] + '-tenant';
     const q = `mutation Signup($input: SignupInput!) { signup(input: $input) { token userId tenantId } }`;
     const out = await gql(q, { input: { email, password, tenantName } });
     return out.signup;
@@ -114,7 +122,9 @@ async function ingestOrders(token, orders) {
     }
     const created = res.data?.created;
     const id = res.data?.orderId;
-    console.log(` - ${order.channel} ${order.externalId}: ${created ? 'created' : 'exists'} (id=${id})`);
+    console.log(
+      ` - ${order.channel} ${order.externalId}: ${created ? 'created' : 'exists'} (id=${id})`,
+    );
   }
 }
 
@@ -141,4 +151,3 @@ main().catch((e) => {
   console.error('Seed failed:', e?.message || e);
   process.exit(1);
 });
-

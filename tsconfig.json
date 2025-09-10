@@ -1,8 +1,11 @@
 {
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
-    "composite": true
+    "composite": true,
+    "types": ["node"],
+    "emitDecoratorMetadata": true,
+    "experimentalDecorators": true
   },
-  "include": ["packages", "services", "apps"]
+  "include": ["packages", "services", "apps"],
+  "exclude": ["**/test/**"]
 }
-

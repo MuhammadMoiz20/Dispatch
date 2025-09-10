@@ -48,6 +48,21 @@ export const eventsPublishedTotal = new Counter({
   registers: [registry],
 });
 
+// Refund metrics
+export const refundsTotal = new Counter({
+  name: 'refunds_total',
+  help: 'Total number of refunds, partitioned by status',
+  labelNames: ['status'] as const, // pending|succeeded|failed
+  registers: [registry],
+});
+
+export const refundLatencyMs = new Histogram({
+  name: 'refund_latency_ms',
+  help: 'Refund execution latency in milliseconds',
+  buckets: [10, 25, 50, 100, 250, 500, 1000, 2000, 5000],
+  registers: [registry],
+});
+
 @Controller('/metrics')
 export class MetricsController {
   @Get()

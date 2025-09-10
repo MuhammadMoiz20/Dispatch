@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 async function httpJson(url: string, opts: any = {}) {
-  const res = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+  });
   const text = await res.text();
   let data: any = {};
   try {
@@ -13,7 +16,9 @@ async function httpJson(url: string, opts: any = {}) {
 }
 
 async function ingestOrder(token: string, order: any) {
-  const bases = [process.env.ORDERS_BASE, 'http://localhost:14002', 'http://localhost:4002'].filter(Boolean) as string[];
+  const bases = [process.env.ORDERS_BASE, 'http://localhost:14002', 'http://localhost:4002'].filter(
+    Boolean,
+  ) as string[];
   let lastErr: any;
   for (const base of bases) {
     try {
@@ -41,7 +46,10 @@ test('orders list renders after signup and ingest', async ({ page, baseURL }) =>
   await page.getByLabel('Password').fill(password);
   await page.getByLabel('Tenant Name').fill(tenantName);
 
-  await Promise.all([page.waitForURL('**/orders'), page.getByRole('button', { name: /sign up/i }).click()]);
+  await Promise.all([
+    page.waitForURL('**/orders'),
+    page.getByRole('button', { name: /sign up/i }).click(),
+  ]);
 
   const token = await page.evaluate(() => window.localStorage.getItem('token'));
   expect(token).toBeTruthy();
@@ -67,4 +75,3 @@ test('orders list renders after signup and ingest', async ({ page, baseURL }) =>
   // Expect at least one of our external IDs visible
   await expect(page.getByText(orders[0].externalId)).toBeVisible();
 });
-
