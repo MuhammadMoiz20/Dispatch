@@ -1,4 +1,10 @@
-import { S3Client, PutObjectCommand, CreateBucketCommand, HeadBucketCommand } from '@aws-sdk/client-s3';
+import {
+  S3Client,
+  PutObjectCommand,
+  CreateBucketCommand,
+  HeadBucketCommand,
+  GetObjectCommand,
+} from '@aws-sdk/client-s3';
 import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 const S3_ENDPOINT = process.env.S3_ENDPOINT || 'http://127.0.0.1:9000';
@@ -28,7 +34,11 @@ export async function ensureBucket() {
   }
 }
 
-export async function putLabelObject(key: string, body: Uint8Array | Buffer | string, contentType = 'application/octet-stream') {
+export async function putLabelObject(
+  key: string,
+  body: Uint8Array | Buffer | string,
+  contentType = 'application/octet-stream',
+) {
   await ensureBucket();
   await s3.send(
     new PutObjectCommand({
@@ -41,7 +51,7 @@ export async function putLabelObject(key: string, body: Uint8Array | Buffer | st
 }
 
 export async function getLabelDownloadUrl(key: string, expiresSeconds = 900): Promise<string> {
-  const cmd = new (require('@aws-sdk/client-s3').GetObjectCommand)({ Bucket: S3_BUCKET, Key: key });
+  const cmd = new GetObjectCommand({ Bucket: S3_BUCKET, Key: key });
   const url: string = await getSignedUrl(s3, cmd, { expiresIn: expiresSeconds });
   if (!S3_PUBLIC_URL) return url;
   try {
@@ -58,4 +68,3 @@ export async function getLabelDownloadUrl(key: string, expiresSeconds = 900): Pr
 export function getBucket(): string {
   return S3_BUCKET;
 }
-

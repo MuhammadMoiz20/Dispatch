@@ -5,8 +5,14 @@ export default function Home() {
   const [reason, setReason] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql', []);
-  const ordersBase = useMemo(() => process.env.NEXT_PUBLIC_ORDERS_URL || 'http://localhost:14002', []);
+  const apiUrl = useMemo(
+    () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql',
+    [],
+  );
+  const ordersBase = useMemo(
+    () => process.env.NEXT_PUBLIC_ORDERS_URL || 'http://localhost:14002',
+    [],
+  );
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -28,7 +34,11 @@ export default function Home() {
         body: JSON.stringify({ query: 'query { health }' }),
       });
       // Ignore ping body; proceed regardless of result
-      try { await ping.json(); } catch {}
+      try {
+        await ping.json();
+      } catch (e) {
+        /* ignore ping parse */
+      }
 
       // Create return via Orders REST API (works even if GraphQL mutation is unavailable)
       const res = await fetch(`${ordersBase}/v1/returns`, {

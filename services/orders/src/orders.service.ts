@@ -1,7 +1,11 @@
 import 'reflect-metadata';
-import { ConflictException, Injectable, UnauthorizedException, InternalServerErrorException } from '@nestjs/common';
+import {
+  ConflictException,
+  Injectable,
+  UnauthorizedException,
+  InternalServerErrorException,
+} from '@nestjs/common';
 import { PrismaService } from './prisma.service';
-import { Prisma } from '@prisma/client';
 import { createRabbitMQ } from '@dispatch/messaging';
 import { IngestOrderDto, ListOrdersQueryDto } from './orders.dto';
 import jwt from 'jsonwebtoken';
@@ -25,7 +29,8 @@ export class OrdersService {
   getTenantIdFromAuth(authHeader?: string): string {
     if (!authHeader) throw new UnauthorizedException('Missing Authorization');
     const [scheme, token] = authHeader.split(' ');
-    if (scheme?.toLowerCase() !== 'bearer' || !token) throw new UnauthorizedException('Invalid Authorization');
+    if (scheme?.toLowerCase() !== 'bearer' || !token)
+      throw new UnauthorizedException('Invalid Authorization');
     try {
       const decoded = jwt.verify(token, DEFAULT_SECRET) as any;
       const tenantId = decoded?.tenantId;
@@ -49,7 +54,11 @@ export class OrdersService {
                 tenantId,
                 channel: input.channel,
                 externalId: input.externalId,
-                items: { createMany: { data: input.items.map((i) => ({ sku: i.sku, quantity: i.quantity })) } },
+                items: {
+                  createMany: {
+                    data: input.items.map((i) => ({ sku: i.sku, quantity: i.quantity })),
+                  },
+                },
               },
               include: { items: true },
             }),
@@ -67,7 +76,11 @@ export class OrdersService {
               tenantId,
               channel: input.channel,
               externalId: input.externalId,
-              items: { createMany: { data: input.items.map((i) => ({ sku: i.sku, quantity: i.quantity })) } },
+              items: {
+                createMany: {
+                  data: input.items.map((i) => ({ sku: i.sku, quantity: i.quantity })),
+                },
+              },
             },
             include: { items: true },
           });
@@ -92,13 +105,20 @@ export class OrdersService {
           },
         });
       } catch {}
-      if (!created || !created.id) throw new InternalServerErrorException('Order creation returned no result');
+      if (!created || !created.id)
+        throw new InternalServerErrorException('Order creation returned no result');
       return { created: true, orderId: created.id };
     } catch (e: any) {
       // Prisma P2002 is unique constraint violation
       if (e?.code === 'P2002') {
         const existing = await (this.prisma as any).order.findUnique({
-          where: { tenantId_channel_externalId: { tenantId, channel: input.channel, externalId: input.externalId } },
+          where: {
+            tenantId_channel_externalId: {
+              tenantId,
+              channel: input.channel,
+              externalId: input.externalId,
+            },
+          },
         });
         if (!existing) throw new ConflictException('Duplicate order');
         return { created: false, orderId: existing.id };
@@ -106,7 +126,13 @@ export class OrdersService {
       // As a last resort, attempt to fetch possibly created record to avoid failing idempotent calls
       try {
         const existing = await (this.prisma as any).order.findUnique({
-          where: { tenantId_channel_externalId: { tenantId, channel: input.channel, externalId: input.externalId } },
+          where: {
+            tenantId_channel_externalId: {
+              tenantId,
+              channel: input.channel,
+              externalId: input.externalId,
+            },
+          },
         });
         if (existing?.id) return { created: false, orderId: existing.id };
       } catch {}
@@ -142,13 +168,13 @@ export class OrdersService {
     } catch {
       // Fallback path without RLS helper (e.g., tests)
       total = await (this.prisma as any).order.count({ where });
-      rows = await (this.prisma as any).order.findMany({
+      rows = (await (this.prisma as any).order.findMany({
         where,
         orderBy: { createdAt: 'desc' },
         skip: (page - 1) * pageSize,
         take: pageSize,
         include: { _count: { select: { items: true } } },
-      }) as any;
+      })) as any;
     }
 
     const items: OrderSummary[] = rows.map((o: any) => ({

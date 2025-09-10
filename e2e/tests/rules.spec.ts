@@ -11,7 +11,10 @@ test('dashboard rules CRUD', async ({ page }) => {
   const res = await fetch(apiUrl, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: signupMutation, variables: { input: { email, password, tenantName } } }),
+    body: JSON.stringify({
+      query: signupMutation,
+      variables: { input: { email, password, tenantName } },
+    }),
   });
   const json = await res.json();
   const token = json?.data?.signup?.token;
@@ -30,4 +33,3 @@ test('dashboard rules CRUD', async ({ page }) => {
   await page.getByRole('button', { name: /^Create$/ }).click();
   await expect(page.getByText(/Auto-approve wrong-size/i)).toBeVisible({ timeout: 10000 });
 });
-

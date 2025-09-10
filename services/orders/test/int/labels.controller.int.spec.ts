@@ -18,7 +18,9 @@ describe('LabelsController (int, mocked Prisma + storage)', () => {
 
   beforeAll(async () => {
     // Ensure mocked implementations are set on the actual imported module
-    (storage.putLabelObject as unknown as jest.Mock) = jest.fn().mockResolvedValue(undefined) as any;
+    (storage.putLabelObject as unknown as jest.Mock) = jest
+      .fn()
+      .mockResolvedValue(undefined) as any;
     (storage.getLabelDownloadUrl as unknown as jest.Mock) = jest
       .fn()
       .mockResolvedValue('http://localhost:9000/dispatch-labels/test.txt') as any;
@@ -40,13 +42,28 @@ describe('LabelsController (int, mocked Prisma + storage)', () => {
     jest.clearAllMocks();
     // Ensure storage mocks keep returning expected values after clear
     (storage.putLabelObject as unknown as jest.Mock).mockResolvedValue(undefined);
-    (storage.getLabelDownloadUrl as unknown as jest.Mock).mockResolvedValue('http://localhost:9000/dispatch-labels/test.txt');
+    (storage.getLabelDownloadUrl as unknown as jest.Mock).mockResolvedValue(
+      'http://localhost:9000/dispatch-labels/test.txt',
+    );
   });
 
   it('creates label (201) and returns metadata with URL', async () => {
-    (prismaMock.return.findUnique as any).mockResolvedValue({ id: 'r1', tenantId: 't1', state: 'initiated' });
+    (prismaMock.return.findUnique as any).mockResolvedValue({
+      id: 'r1',
+      tenantId: 't1',
+      state: 'initiated',
+    });
     (prismaMock.label.findUnique as any).mockResolvedValue(null);
-    (prismaMock.label.create as any).mockResolvedValue({ id: 'l1', returnId: 'r1', carrier: 'mock-carrier', service: 'ground', costCents: 900, currency: 'USD', objectKey: 'k', createdAt: new Date() });
+    (prismaMock.label.create as any).mockResolvedValue({
+      id: 'l1',
+      returnId: 'r1',
+      carrier: 'mock-carrier',
+      service: 'ground',
+      costCents: 900,
+      currency: 'USD',
+      objectKey: 'k',
+      createdAt: new Date(),
+    });
 
     const res = await request(app.getHttpServer()).post('/v1/returns/r1/label').send({});
     expect(res.status).toBe(201);
@@ -61,7 +78,16 @@ describe('LabelsController (int, mocked Prisma + storage)', () => {
   });
 
   it('get existing label (200)', async () => {
-    (prismaMock.label.findUnique as any).mockResolvedValue({ id: 'l1', returnId: 'r1', carrier: 'mock', service: 'ground', costCents: 900, currency: 'USD', objectKey: 'k', createdAt: new Date() });
+    (prismaMock.label.findUnique as any).mockResolvedValue({
+      id: 'l1',
+      returnId: 'r1',
+      carrier: 'mock',
+      service: 'ground',
+      costCents: 900,
+      currency: 'USD',
+      objectKey: 'k',
+      createdAt: new Date(),
+    });
     const res = await request(app.getHttpServer()).get('/v1/returns/r1/label');
     expect(res.status).toBe(200);
     expect(res.body?.id).toBe('l1');

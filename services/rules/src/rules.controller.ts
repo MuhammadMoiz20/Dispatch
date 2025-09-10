@@ -1,7 +1,27 @@
 import 'reflect-metadata';
-import { Body, Controller, Delete, Get, Headers, HttpCode, HttpStatus, Param, Post, Put } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+} from '@nestjs/common';
 import { plainToInstance, Type } from 'class-transformer';
-import { IsArray, IsBoolean, IsInt, IsObject, IsOptional, IsString, Min, validateOrReject } from 'class-validator';
+import {
+  IsArray,
+  IsBoolean,
+  IsInt,
+  IsObject,
+  IsOptional,
+  IsString,
+  Min,
+  validateOrReject,
+} from 'class-validator';
 import { RulesService } from './rules.service';
 import { ruleEvalDuration } from './metrics.controller';
 
@@ -76,7 +96,11 @@ export class RulesController {
   }
 
   @Put('/rules/:id')
-  async update(@Param('id') id: string, @Body() body: UpdateRuleDto, @Headers('authorization') auth?: string) {
+  async update(
+    @Param('id') id: string,
+    @Body() body: UpdateRuleDto,
+    @Headers('authorization') auth?: string,
+  ) {
     const dto = plainToInstance(UpdateRuleDto, body, { enableImplicitConversion: true });
     await validateOrReject(dto as any, { forbidUnknownValues: false });
     const tenantId = this.rules.getTenantIdFromAuth(auth);
@@ -102,4 +126,3 @@ export class RulesController {
     }
   }
 }
-

@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
+import { VirtualTable, Chip, Tooltip } from '@dispatch/ui';
 import { makeWsClient, subscribe } from '../lib/subscriptions';
 import { useRouter } from 'next/router';
 
@@ -24,7 +25,10 @@ export default function Orders() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql', []);
+  const apiUrl = useMemo(
+    () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql',
+    [],
+  );
 
   useEffect(() => {
     const t = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
@@ -47,10 +51,27 @@ export default function Orders() {
       const res = await fetch(apiUrl, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ query, variables: { page: p, pageSize, status: status || undefined, channel: channel || undefined } }),
+        body: JSON.stringify({
+          query,
+          variables: {
+            page: p,
+            pageSize,
+            status: status || undefined,
+            channel: channel || undefined,
+          },
+        }),
       });
+      if (res.status === 401) {
+        setError('Unauthorized: please log in again');
+        router.replace('/login');
+        return;
+      }
+      if (res.status === 403) {
+        setError('Forbidden: your token lacks access');
+        return;
+      }
       const json = await res.json();
-      if (json.errors?.length) throw new Error(json.errors[0].message);
+      if (json.errors?.length) throw new Error(json.errors[0].message || 'GraphQL error');
       const data = json.data.orders;
       setItems(data.items);
       setTotal(data.total);
@@ -72,7 +93,11 @@ export default function Orders() {
       void fetchOrders({ page: 1 });
     });
     return () => {
-      try { dispose(); } catch {}
+      try {
+        dispose();
+      } catch (e) {
+        console.error(e);
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
@@ -80,83 +105,127 @@ export default function Orders() {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
 
   return (
-    <main style={{ padding: 24 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <h1>Orders</h1>
-        <button
-          onClick={() => {
-            localStorage.removeItem('token');
-            router.replace('/login');
-          }}
-        >
-          Logout
-        </button>
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-xl font-semibold">Orders</h1>
       </div>
-      <div style={{ marginBottom: 16 }}>
-        <label style={{ marginRight: 8 }}>
-          Status:
-          <input value={status} onChange={(e) => setStatus(e.target.value)} placeholder="created/shipped/etc" style={{ marginLeft: 4 }} />
-        </label>
-        <label style={{ marginRight: 8 }}>
-          Channel:
-          <input value={channel} onChange={(e) => setChannel(e.target.value)} placeholder="shopify/amazon/etc" style={{ marginLeft: 4 }} />
-        </label>
-        <button onClick={() => fetchOrders({ page: 1 })} disabled={loading}>
-          Apply
-        </button>
+      <div className="card">
+        <div className="card-body flex flex-wrap items-end gap-3">
+          <label className="text-sm flex items-center">
+            <span className="text-gray-600 dark:text-gray-300">Status</span>
+            <Tooltip tip="Filter by order status. e.g. created, shipped, delivered.">
+              <span
+                aria-hidden
+                className="ml-1 inline-block w-4 h-4 rounded-full bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-200 text-center leading-4"
+              >
+                i
+              </span>
+            </Tooltip>
+            <input
+              value={status}
+              onChange={(e) => setStatus(e.target.value)}
+              placeholder="created/shipped/etc"
+              className="mt-1 ml-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1"
+            />
+          </label>
+          <label className="text-sm">
+            <span className="text-gray-600 dark:text-gray-300">Channel</span>
+            <input
+              value={channel}
+              onChange={(e) => setChannel(e.target.value)}
+              placeholder="shopify/amazon/etc"
+              className="mt-1 ml-2 rounded-md border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 px-3 py-1"
+            />
+          </label>
+          <button
+            onClick={() => fetchOrders({ page: 1 })}
+            disabled={loading}
+            className="btn-primary"
+          >
+            Apply
+          </button>
+        </div>
       </div>
 
       {error && (
-        <div style={{ color: 'red', marginBottom: 12 }}>Error: {error}</div>
+        <div className="card">
+          <div className="card-body text-red-600">
+            Error: {error}{' '}
+            {error?.toLowerCase().includes('unauthorized') && (
+              <Link href="/login" className="ml-2 underline">
+                Go to login
+              </Link>
+            )}
+          </div>
+        </div>
       )}
 
-      <table border={1} cellPadding={8} cellSpacing={0} style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Channel</th>
-            <th>External ID</th>
-            <th>Status</th>
-            <th>Items</th>
-            <th>Created</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((o) => (
-            <tr key={o.id}>
-              <td>{o.id}</td>
-              <td>{o.channel}</td>
-              <td>{o.externalId}</td>
-              <td>{o.status}</td>
-              <td>{o.itemsCount}</td>
-              <td>{new Date(o.createdAt).toLocaleString()}</td>
-            </tr>
-          ))}
-          {items.length === 0 && !loading && (
-            <tr>
-              <td colSpan={6} style={{ textAlign: 'center' }}>
-                No orders found
-              </td>
-            </tr>
-          )}
-        </tbody>
-      </table>
+      <VirtualTable
+        ariaLabel="Orders table"
+        rows={items.map((o) => ({ ...o, id: o.id }))}
+        columns={[
+          {
+            key: 'id',
+            header: 'ID',
+            width: 220,
+            render: (r) => <code className="text-xs">{r.id}</code>,
+          },
+          { key: 'channel', header: 'Channel', width: 140 },
+          { key: 'externalId', header: 'External ID', width: 180 },
+          {
+            key: 'status',
+            header: 'Status',
+            width: 160,
+            render: (r) => (
+              <Chip
+                tone={
+                  r.status === 'shipped' || r.status === 'delivered'
+                    ? 'success'
+                    : r.status === 'cancelled'
+                      ? 'danger'
+                      : 'neutral'
+                }
+              >
+                {r.status}
+              </Chip>
+            ),
+          },
+          { key: 'itemsCount', header: 'Items', width: 100 },
+          {
+            key: 'createdAt',
+            header: 'Created',
+            width: 220,
+            render: (r) => new Date(r.createdAt).toLocaleString(),
+          },
+        ]}
+        height={520}
+      />
 
-      <div style={{ marginTop: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
-        <button disabled={page <= 1 || loading} onClick={() => fetchOrders({ page: page - 1 })}>
+      <div className="flex items-center gap-3">
+        <button
+          disabled={page <= 1 || loading}
+          onClick={() => fetchOrders({ page: page - 1 })}
+          className="btn-secondary"
+        >
           Prev
         </button>
-        <span>
+        <span className="text-sm text-gray-600 dark:text-gray-300">
           Page {page} / {totalPages} ({total} total)
         </span>
-        <button disabled={page >= totalPages || loading} onClick={() => fetchOrders({ page: page + 1 })}>
+        <button
+          disabled={page >= totalPages || loading}
+          onClick={() => fetchOrders({ page: page + 1 })}
+          className="btn-secondary"
+        >
           Next
         </button>
       </div>
 
-      <p style={{ marginTop: 16 }}>
-        <Link href="/">Back to Home</Link>
+      <p className="text-sm">
+        <Link href="/" className="text-gray-600 dark:text-gray-300">
+          Back to Home
+        </Link>
       </p>
-    </main>
+    </div>
   );
 }

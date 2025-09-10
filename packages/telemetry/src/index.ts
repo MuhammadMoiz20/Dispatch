@@ -22,7 +22,8 @@ export function initTelemetry(serviceName?: string) {
     const { getNodeAutoInstrumentations } = require('@opentelemetry/auto-instrumentations-node');
 
     const resource = new Resource({
-      [SemanticResourceAttributes.SERVICE_NAME]: process.env.OTEL_SERVICE_NAME || serviceName || 'dispatch-service',
+      [SemanticResourceAttributes.SERVICE_NAME]:
+        process.env.OTEL_SERVICE_NAME || serviceName || 'dispatch-service',
       [SemanticResourceAttributes.DEPLOYMENT_ENVIRONMENT]: process.env.NODE_ENV || 'development',
     });
 
@@ -40,13 +41,18 @@ export function initTelemetry(serviceName?: string) {
 
     // Graceful shutdown in local/dev
     process.on('SIGTERM', () => {
-      sdk.shutdown().catch(() => {}).finally(() => process.exit(0));
+      sdk
+        .shutdown()
+        .catch(() => {})
+        .finally(() => process.exit(0));
     });
     process.on('SIGINT', () => {
-      sdk.shutdown().catch(() => {}).finally(() => process.exit(0));
+      sdk
+        .shutdown()
+        .catch(() => {})
+        .finally(() => process.exit(0));
     });
   } catch (e) {
     // OpenTelemetry packages not installed; run without telemetry
   }
 }
-

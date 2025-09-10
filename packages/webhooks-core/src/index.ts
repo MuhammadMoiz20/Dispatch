@@ -22,4 +22,3 @@ export async function deliverWebhook({ url, secret, payload, timestamp }: Delive
     validateStatus: () => true,
   });
 }
-

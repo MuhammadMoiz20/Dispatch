@@ -31,7 +31,12 @@ export default function Home() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       <div style={{ display: 'flex', flexDirection: 'column', gap: 8, width: 320 }}>
         <input placeholder="email" value={email} onChange={(e) => setEmail(e.target.value)} />
-        <input placeholder="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} />
+        <input
+          placeholder="password"
+          type="password"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
         <button onClick={login}>Login</button>
       </div>
     </main>

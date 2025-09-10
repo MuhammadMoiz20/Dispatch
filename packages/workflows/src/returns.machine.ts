@@ -10,7 +10,6 @@ export const returnsMachine = createMachine({
     delivered: { on: { INSPECT: 'inspected' } },
     inspected: { on: { REFUND: 'refunded' } },
     refunded: { type: 'final' },
-    closed: { type: 'final' }
+    closed: { type: 'final' },
   },
 });
-

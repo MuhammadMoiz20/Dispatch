@@ -35,7 +35,9 @@ describe('Returns metrics (int)', () => {
     (prismaMock.return.findFirst as any).mockResolvedValue(null);
     (prismaMock.return.create as any).mockResolvedValue({ id: 'r1', state: 'initiated' });
 
-    const create = await request(app.getHttpServer()).post('/v1/returns').send({ orderId: 'o1', reason: 'damaged' });
+    const create = await request(app.getHttpServer())
+      .post('/v1/returns')
+      .send({ orderId: 'o1', reason: 'damaged' });
     expect(create.status).toBe(201);
 
     const metrics = await request(app.getHttpServer()).get('/metrics');
@@ -43,4 +45,3 @@ describe('Returns metrics (int)', () => {
     expect(metrics.text).toContain('returns_initiated_total');
   });
 });
-

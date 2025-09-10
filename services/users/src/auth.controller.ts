@@ -1,4 +1,11 @@
-import { Body, Controller, HttpCode, HttpStatus, Post, UnauthorizedException } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  HttpStatus,
+  Post,
+  UnauthorizedException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, SignupDto } from './auth.dto';
 import { validateOrReject } from 'class-validator';
@@ -21,14 +28,23 @@ export class AuthController {
       const result = await this.auth.signup(body);
       authSuccessTotal.labels(op).inc();
       log.info(
-        { event: 'auth_success', op, email: body.email, user_id: result.userId, tenant_id: result.tenantId },
+        {
+          event: 'auth_success',
+          op,
+          email: body.email,
+          user_id: result.userId,
+          tenant_id: result.tenantId,
+        },
         'Auth success',
       );
       return result;
     } catch (e: any) {
       const reason = (e?.name || 'Error').toString().toLowerCase();
       authFailuresTotal.labels(op, reason).inc();
-      log.warn({ event: 'auth_failure', op, email: body.email, tenant_id: null, reason }, 'Auth failure');
+      log.warn(
+        { event: 'auth_failure', op, email: body.email, tenant_id: null, reason },
+        'Auth failure',
+      );
       throw e;
     }
   }
@@ -44,14 +60,23 @@ export class AuthController {
       const result = await this.auth.login(body);
       authSuccessTotal.labels(op).inc();
       log.info(
-        { event: 'auth_success', op, email: body.email, user_id: result.userId, tenant_id: result.tenantId },
+        {
+          event: 'auth_success',
+          op,
+          email: body.email,
+          user_id: result.userId,
+          tenant_id: result.tenantId,
+        },
         'Auth success',
       );
       return result;
     } catch (e: any) {
       const reason = (e?.name || 'Error').toString().toLowerCase();
       authFailuresTotal.labels(op, reason).inc();
-      log.warn({ event: 'auth_failure', op, email: body.email, tenant_id: null, reason }, 'Auth failure');
+      log.warn(
+        { event: 'auth_failure', op, email: body.email, tenant_id: null, reason },
+        'Auth failure',
+      );
       throw e;
     }
   }

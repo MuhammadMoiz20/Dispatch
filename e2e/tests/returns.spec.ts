@@ -1,7 +1,10 @@
 import { test, expect } from '@playwright/test';
 
 async function httpJson(url: string, opts: any = {}) {
-  const res = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+  });
   const text = await res.text();
   let data: any = {};
   try {
@@ -20,7 +23,13 @@ test('returns portal initiate flow', async ({ page }) => {
   const password = 'password123';
   const tenantName = `Acme ${Date.now()}`;
   const signupMutation = `mutation Signup($input: SignupInput!) { signup(input: $input) { token } }`;
-  const signup = await httpJson(apiUrl, { method: 'POST', body: JSON.stringify({ query: signupMutation, variables: { input: { email, password, tenantName } } }) });
+  const signup = await httpJson(apiUrl, {
+    method: 'POST',
+    body: JSON.stringify({
+      query: signupMutation,
+      variables: { input: { email, password, tenantName } },
+    }),
+  });
   const token = signup.data?.data?.signup?.token;
   expect(token).toBeTruthy();
 
@@ -36,13 +45,17 @@ test('returns portal initiate flow', async ({ page }) => {
   // Navigate to portal and initiate return using new order id
   const portalBase = process.env.E2E_PORTAL_BASE_URL || 'http://localhost:3002';
   await page.goto(portalBase + '/');
-  const orderList = await httpJson(`${ordersBase}/v1/orders?page=1&pageSize=1`, { headers: { Authorization: `Bearer ${token}` } });
+  const orderList = await httpJson(`${ordersBase}/v1/orders?page=1&pageSize=1`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   const createdId = orderList.data?.items?.[0]?.id;
   expect(createdId).toBeTruthy();
 
   await page.getByLabel('Order ID').fill(createdId);
   await page.getByLabel('Reason').fill('damaged');
-  const waitGql = page.waitForResponse((r) => r.url().includes('/graphql') && r.request().method() === 'POST');
+  const waitGql = page.waitForResponse(
+    (r) => r.url().includes('/graphql') && r.request().method() === 'POST',
+  );
   await page.getByRole('button', { name: /start return/i }).click();
   const gqlResp = await waitGql;
   expect(gqlResp.status()).toBeLessThan(400);

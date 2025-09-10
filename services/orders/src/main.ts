@@ -9,8 +9,12 @@ import { PrismaService } from './prisma.service';
 import { OrdersController } from './orders.controller';
 import { ReturnsController } from './returns.controller';
 import { LabelsController } from './labels.controller';
+import { RatesController } from './rates.controller';
+import { RefundsController } from './refunds.controller';
 import { OrdersService } from './orders.service';
 import { OutboxWorker } from './outbox.worker';
+import { RefundsWorker } from './refunds.worker';
+import { ProviderWebhooksController } from './provider-webhooks.controller';
 import { MetricsController } from './metrics.controller';
 import jwt from 'jsonwebtoken';
 import { initTelemetry } from '@dispatch/telemetry';
@@ -24,7 +28,19 @@ class HealthController {
   }
 }
 
-@Module({ controllers: [HealthController, OrdersController, ReturnsController, LabelsController, MetricsController], providers: [PrismaService, OrdersService, OutboxWorker] })
+@Module({
+  controllers: [
+    HealthController,
+    OrdersController,
+    ReturnsController,
+    LabelsController,
+    RatesController,
+    RefundsController,
+    ProviderWebhooksController,
+    MetricsController,
+  ],
+  providers: [PrismaService, OrdersService, OutboxWorker, RefundsWorker],
+})
 class AppModule {}
 
 async function bootstrap() {
@@ -53,7 +69,8 @@ async function bootstrap() {
         const [scheme, token] = auth.split(' ');
         if (scheme?.toLowerCase() === 'bearer' && token) {
           const decoded: any = jwt.verify(token, process.env.JWT_SECRET || 'dev-secret');
-          if (decoded?.tenantId) (res as any).locals = { ...(res as any).locals, tenant_id: decoded.tenantId };
+          if (decoded?.tenantId)
+            (res as any).locals = { ...(res as any).locals, tenant_id: decoded.tenantId };
         }
       }
     } catch {}
@@ -64,8 +81,12 @@ async function bootstrap() {
   app.use(async (req: Request, res: Response, next: NextFunction) => {
     try {
       if (req.method === 'POST' && req.path === '/v1/returns' && (req as any).body?.orderId) {
-        const order = await prisma.order.findUnique({ where: { id: (req as any).body.orderId }, select: { tenantId: true } });
-        if (order?.tenantId) (res as any).locals = { ...(res as any).locals, tenant_id: order.tenantId };
+        const order = await (prisma as any).order.findUnique({
+          where: { id: (req as any).body.orderId },
+          select: { tenantId: true },
+        });
+        if (order?.tenantId)
+          (res as any).locals = { ...(res as any).locals, tenant_id: order.tenantId };
       }
     } catch {}
     next();

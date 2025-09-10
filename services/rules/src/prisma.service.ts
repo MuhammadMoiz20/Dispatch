@@ -27,7 +27,21 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async runWithTenant<T>(
     tenantId: string,
-    fn: (tx: Omit<PrismaClient, "$on" | "$connect" | "$disconnect" | "$use" | "$executeRaw" | "$executeRawUnsafe" | "$queryRaw" | "$queryRawUnsafe" | "$transaction" | "$extends">) => Promise<T>,
+    fn: (
+      tx: Omit<
+        PrismaClient,
+        | '$on'
+        | '$connect'
+        | '$disconnect'
+        | '$use'
+        | '$executeRaw'
+        | '$executeRawUnsafe'
+        | '$queryRaw'
+        | '$queryRawUnsafe'
+        | '$transaction'
+        | '$extends'
+      >,
+    ) => Promise<T>,
   ) {
     return this.$transaction(async (tx: Prisma.TransactionClient) => {
       await tx.$executeRawUnsafe(`SET LOCAL app.current_tenant = '${tenantId}'`);

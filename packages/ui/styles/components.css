@@ -1,0 +1,135 @@
+/* Prefixed UI components to avoid clashes with Tailwind styles */
+
+.uix-card {
+  background: var(--color-surface);
+  border: 1px solid var(--color-elev-stroke);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+}
+.uix-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-4) var(--space-5) var(--space-2);
+}
+.uix-card-title {
+  font-size: var(--fs-2);
+  color: var(--color-text-dim);
+}
+.uix-card-actions {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+.uix-card-body {
+  padding: 0 var(--space-5) var(--space-5);
+}
+
+.uix-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px;
+  border-radius: 999px;
+  font-size: var(--fs-1);
+  border: 1px solid var(--color-elev-stroke);
+  background: var(--color-elev-1);
+  color: var(--color-text);
+}
+.uix-chip.success {
+  color: var(--color-success);
+  border-color: color-mix(in oklab, var(--color-success), #000 60%);
+}
+.uix-chip.warning {
+  color: var(--color-warning);
+  border-color: color-mix(in oklab, var(--color-warning), #000 60%);
+}
+.uix-chip.danger {
+  color: var(--color-danger);
+  border-color: color-mix(in oklab, var(--color-danger), #000 60%);
+}
+
+.uix-stepper {
+  display: flex;
+  gap: var(--space-4);
+  align-items: center;
+  flex-wrap: wrap;
+}
+.uix-step {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-text-dim);
+}
+.uix-step.complete {
+  color: var(--color-success);
+}
+.uix-step.active {
+  color: var(--color-accent);
+}
+.uix-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: var(--color-elev-2);
+  border: 1px solid var(--color-elev-stroke);
+}
+.uix-step.complete .uix-dot {
+  background: var(--color-success);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-success), transparent 70%);
+}
+.uix-step.active .uix-dot {
+  background: var(--color-accent);
+  box-shadow: 0 0 0 3px color-mix(in oklab, var(--color-accent), transparent 70%);
+}
+
+.uix-tooltip {
+  position: relative;
+}
+.uix-tooltip:hover::after {
+  content: attr(data-tip);
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  bottom: calc(100% + 6px);
+  background: var(--color-elev-2);
+  color: var(--color-text);
+  border: 1px solid var(--color-elev-stroke);
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: var(--fs-1);
+  white-space: nowrap;
+  box-shadow: var(--shadow-sm);
+}
+
+.uix-table {
+  overflow: hidden;
+}
+.uix-table-head {
+  border-bottom: 1px solid var(--color-elev-stroke);
+}
+.uix-table-row {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 0;
+}
+.uix-th,
+.uix-td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--color-elev-stroke);
+}
+.uix-th {
+  font-size: var(--fs-1);
+  color: var(--color-text-dim);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.uix-table-body {
+  overflow: auto;
+}
+.uix-tr {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+}

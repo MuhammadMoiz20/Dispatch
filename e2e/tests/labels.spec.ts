@@ -1,10 +1,17 @@
 import { test, expect } from '@playwright/test';
 
 async function httpJson(url: string, opts: any = {}) {
-  const res = await fetch(url, { ...opts, headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) } });
+  const res = await fetch(url, {
+    ...opts,
+    headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+  });
   const text = await res.text();
   let data: any = {};
-  try { data = text ? JSON.parse(text) : {}; } catch (e) { throw new Error(`Non-JSON from ${url}: ${text}`); }
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch (e) {
+    throw new Error(`Non-JSON from ${url}: ${text}`);
+  }
   return { status: res.status, data };
 }
 
@@ -17,20 +24,35 @@ test('portal download flow', async ({ page }) => {
   const password = 'password123';
   const tenantName = `Acme ${Date.now()}`;
   const signupMutation = `mutation Signup($input: SignupInput!) { signup(input: $input) { token } }`;
-  const signup = await httpJson(apiUrl, { method: 'POST', body: JSON.stringify({ query: signupMutation, variables: { input: { email, password, tenantName } } }) });
+  const signup = await httpJson(apiUrl, {
+    method: 'POST',
+    body: JSON.stringify({
+      query: signupMutation,
+      variables: { input: { email, password, tenantName } },
+    }),
+  });
   const token = signup.data?.data?.signup?.token as string;
   expect(token).toBeTruthy();
 
   // Ingest order
   const ext = `LBL-${Date.now()}`;
   const order = { channel: 'shopify', externalId: ext, items: [{ sku: 'SKU-1', quantity: 1 }] };
-  const ingest = await httpJson(`${ordersBase}/v1/orders/ingest`, { method: 'POST', headers: { Authorization: `Bearer ${token}` }, body: JSON.stringify(order) });
+  const ingest = await httpJson(`${ordersBase}/v1/orders/ingest`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(order),
+  });
   expect([200, 201]).toContain(ingest.status);
 
   // Create return
-  const list = await httpJson(`${ordersBase}/v1/orders?page=1&pageSize=1`, { headers: { Authorization: `Bearer ${token}` } });
+  const list = await httpJson(`${ordersBase}/v1/orders?page=1&pageSize=1`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
   const orderId = list.data?.items?.[0]?.id as string;
-  const created = await httpJson(`${ordersBase}/v1/returns`, { method: 'POST', body: JSON.stringify({ orderId, reason: 'damaged' }) });
+  const created = await httpJson(`${ordersBase}/v1/returns`, {
+    method: 'POST',
+    body: JSON.stringify({ orderId, reason: 'damaged' }),
+  });
   expect([200, 201]).toContain(created.status);
   const returnId = created.data?.id as string;
   expect(returnId).toBeTruthy();
@@ -51,4 +73,3 @@ test('portal download flow', async ({ page }) => {
   const href = await link.getAttribute('href');
   expect(href).toMatch(/^http/);
 });
-

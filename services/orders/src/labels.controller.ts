@@ -1,4 +1,14 @@
-import { Body, Controller, Get, Headers, HttpCode, HttpStatus, NotFoundException, Param, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  NotFoundException,
+  Param,
+  Post,
+} from '@nestjs/common';
 import { PrismaService } from './prisma.service';
 import * as storage from './storage';
 import { labelsGeneratedTotal, labelGenerationDurationMs } from './metrics.controller';
@@ -33,11 +43,24 @@ export class LabelsController {
 
   @Post('/:id/label')
   @HttpCode(HttpStatus.CREATED)
-  async generate(@Param('id') id: string, @Body() body?: { carrier?: string; service?: string }, @Headers('authorization') _auth?: string) {
+  async generate(
+    @Param('id') id: string,
+    @Body() body?: { carrier?: string; service?: string },
+    @Headers('authorization') _auth?: string,
+  ) {
     const start = Date.now();
     const ret = await (this.prisma as any).return.findUnique({ where: { id } });
     if (!ret) throw new NotFoundException('Return not found');
     const tenantId = ret.tenantId;
+    // Load order to enrich analytics event
+    let orderChannel: string | undefined = undefined;
+    try {
+      const ord = await (this.prisma as any).order.findUnique({
+        where: { id: ret.orderId },
+        select: { channel: true },
+      });
+      orderChannel = ord?.channel;
+    } catch {}
     // Idempotent: return existing
     const existing = await (this.prisma as any).label.findUnique?.({ where: { returnId: id } });
     if (existing) {
@@ -67,7 +90,10 @@ export class LabelsController {
     // Update return state to label_generated if still initiated
     try {
       if (ret.state === 'initiated') {
-        await (this.prisma as any).return.update({ where: { id }, data: { state: 'label_generated' } });
+        await (this.prisma as any).return.update({
+          where: { id },
+          data: { state: 'label_generated' },
+        });
       }
     } catch {}
 
@@ -85,6 +111,8 @@ export class LabelsController {
             service,
             costCents: created.costCents,
             currency: created.currency,
+            orderId: ret.orderId,
+            channel: orderChannel,
             at: new Date().toISOString(),
           },
         },

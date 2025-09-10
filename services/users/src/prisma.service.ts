@@ -27,9 +27,23 @@ export class PrismaService extends PrismaClient implements OnModuleInit {
 
   async runWithTenant<T>(
     tenantId: string,
-    fn: (tx: Omit<PrismaClient, "$on" | "$connect" | "$disconnect" | "$use" | "$executeRaw" | "$executeRawUnsafe" | "$queryRaw" | "$queryRawUnsafe" | "$transaction" | "$extends">) => Promise<T>,
+    fn: (
+      tx: Omit<
+        PrismaClient,
+        | '$on'
+        | '$connect'
+        | '$disconnect'
+        | '$use'
+        | '$executeRaw'
+        | '$executeRawUnsafe'
+        | '$queryRaw'
+        | '$queryRawUnsafe'
+        | '$transaction'
+        | '$extends'
+      >,
+    ) => Promise<T>,
   ) {
-  return this.$transaction(async (tx: Prisma.TransactionClient) => {
+    return this.$transaction(async (tx: Prisma.TransactionClient) => {
       // Set RLS context. This assumes a Postgres function app.current_tenant exists.
       await tx.$executeRawUnsafe(`SET LOCAL app.current_tenant = '${tenantId}'`);
       return fn(tx as any);

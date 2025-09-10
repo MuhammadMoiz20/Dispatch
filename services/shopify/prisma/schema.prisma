@@ -1,0 +1,24 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model ShopifyConnection {
+  id           String   @id @default(uuid())
+  tenantId     String
+  shop         String   // my-shop.myshopify.com
+  accessToken  String
+  scopes       String?
+  status       String   @default("active") // active|revoked|error
+  lastWebhookAt DateTime?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  @@unique([tenantId, shop])
+  @@index([tenantId])
+}
+

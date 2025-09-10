@@ -6,7 +6,9 @@ jest.mock('@dispatch/messaging', () => ({
 
 describe('OrdersService', () => {
   const prisma: any = {
-    $transaction: jest.fn((arg: any) => (typeof arg === 'function' ? arg(prisma) : Promise.all(arg))),
+    $transaction: jest.fn((arg: any) =>
+      typeof arg === 'function' ? arg(prisma) : Promise.all(arg),
+    ),
     order: {
       create: jest.fn(),
       findUnique: jest.fn(),
@@ -20,7 +22,11 @@ describe('OrdersService', () => {
   it('ingest returns created true when new', async () => {
     const svc = new OrdersService(prisma);
     (prisma.order.create as any).mockResolvedValue({ id: 'o1' });
-    const res = await svc.ingest('t1', { channel: 'shopify', externalId: 'e1', items: [{ sku: 's1', quantity: 1 }] });
+    const res = await svc.ingest('t1', {
+      channel: 'shopify',
+      externalId: 'e1',
+      items: [{ sku: 's1', quantity: 1 }],
+    });
     expect(res).toEqual({ created: true, orderId: 'o1' });
   });
 
@@ -28,16 +34,29 @@ describe('OrdersService', () => {
     const svc = new OrdersService(prisma);
     (prisma.order.create as any).mockRejectedValue({ code: 'P2002' });
     (prisma.order.findUnique as any).mockResolvedValue({ id: 'o1' });
-    const res = await svc.ingest('t1', { channel: 'shopify', externalId: 'e1', items: [{ sku: 's1', quantity: 1 }] });
+    const res = await svc.ingest('t1', {
+      channel: 'shopify',
+      externalId: 'e1',
+      items: [{ sku: 's1', quantity: 1 }],
+    });
     expect(res).toEqual({ created: false, orderId: 'o1' });
   });
 
   it('list maps items and pagination', async () => {
     const svc = new OrdersService(prisma);
-    (prisma.$transaction as any).mockImplementation((ops: any[]) => Promise.all(ops.map((op) => op)));
+    (prisma.$transaction as any).mockImplementation((ops: any[]) =>
+      Promise.all(ops.map((op) => op)),
+    );
     (prisma.order.count as any).mockResolvedValue(42);
     (prisma.order.findMany as any).mockResolvedValue([
-      { id: 'o1', channel: 'c', externalId: 'e', status: 'created', createdAt: new Date('2020-01-01'), _count: { items: 3 } },
+      {
+        id: 'o1',
+        channel: 'c',
+        externalId: 'e',
+        status: 'created',
+        createdAt: new Date('2020-01-01'),
+        _count: { items: 3 },
+      },
     ]);
     const res = await svc.list('t1', { page: 2, pageSize: 20 });
     expect(res.total).toBe(42);
@@ -46,14 +65,30 @@ describe('OrdersService', () => {
 
   it('list applies filters and pagination to prisma calls', async () => {
     const svc = new OrdersService(prisma);
-    (prisma.$transaction as any).mockImplementation((ops: any[]) => Promise.all(ops.map((op) => op)));
+    (prisma.$transaction as any).mockImplementation((ops: any[]) =>
+      Promise.all(ops.map((op) => op)),
+    );
     (prisma.order.count as any).mockResolvedValue(1);
     (prisma.order.findMany as any).mockResolvedValue([
-      { id: 'o2', channel: 'shopify', externalId: 'e2', status: 'created', createdAt: new Date(), _count: { items: 1 } },
+      {
+        id: 'o2',
+        channel: 'shopify',
+        externalId: 'e2',
+        status: 'created',
+        createdAt: new Date(),
+        _count: { items: 1 },
+      },
     ]);
-    const res = await svc.list('tenant-1', { page: 3, pageSize: 5, status: 'created', channel: 'shopify' } as any);
+    const res = await svc.list('tenant-1', {
+      page: 3,
+      pageSize: 5,
+      status: 'created',
+      channel: 'shopify',
+    } as any);
     expect(res.page).toBe(3);
-    expect(prisma.order.count).toHaveBeenCalledWith({ where: { tenantId: 'tenant-1', status: 'created', channel: 'shopify' } });
+    expect(prisma.order.count).toHaveBeenCalledWith({
+      where: { tenantId: 'tenant-1', status: 'created', channel: 'shopify' },
+    });
     expect(prisma.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tenantId: 'tenant-1', status: 'created', channel: 'shopify' },

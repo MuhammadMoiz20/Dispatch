@@ -13,7 +13,11 @@ export class WebhooksWorker implements OnModuleInit {
     try {
       await this.mq.subscribe<any>('order.created', async (msg) => {
         if (!msg?.tenantId) return;
-        await this.svc.createDeliveriesForEvent({ tenantId: msg.tenantId, type: 'order.created', payload: msg });
+        await this.svc.createDeliveriesForEvent({
+          tenantId: msg.tenantId,
+          type: 'order.created',
+          payload: msg,
+        });
       });
     } catch (e) {
       this.logger.warn(`Failed to subscribe to order.created: ${(e as any)?.message || e}`);
@@ -22,10 +26,16 @@ export class WebhooksWorker implements OnModuleInit {
     try {
       await this.mq.subscribe<any>('return.label_generated', async (msg) => {
         if (!msg?.tenantId) return;
-        await this.svc.createDeliveriesForEvent({ tenantId: msg.tenantId, type: 'return.label_generated', payload: msg });
+        await this.svc.createDeliveriesForEvent({
+          tenantId: msg.tenantId,
+          type: 'return.label_generated',
+          payload: msg,
+        });
       });
     } catch (e) {
-      this.logger.warn(`Failed to subscribe to return.label_generated: ${(e as any)?.message || e}`);
+      this.logger.warn(
+        `Failed to subscribe to return.label_generated: ${(e as any)?.message || e}`,
+      );
     }
     // Subscribe to webhooks.deliver queue for processing
     await this.mq.subscribe<{ deliveryId: string }>('webhooks.deliver', async (msg) => {
@@ -34,7 +44,9 @@ export class WebhooksWorker implements OnModuleInit {
     });
     // Periodic scheduler for due retries
     setInterval(() => {
-      void this.svc.enqueueDueDeliveries().catch((e) => this.logger.warn(`enqueueDueDeliveries: ${e?.message || e}`));
+      void this.svc
+        .enqueueDueDeliveries()
+        .catch((e) => this.logger.warn(`enqueueDueDeliveries: ${e?.message || e}`));
       void this.svc.updateDlqDepthGauge().catch(() => {});
     }, 5000);
   }

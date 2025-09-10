@@ -23,5 +23,3 @@ declare module '@dispatch/messaging' {
   }
   export function createRabbitMQ(url?: string): Messaging;
 }
-
-

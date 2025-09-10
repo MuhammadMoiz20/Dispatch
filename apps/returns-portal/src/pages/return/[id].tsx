@@ -3,13 +3,28 @@ import { useEffect, useMemo, useState } from 'react';
 import { makeWsClient, subscribe } from '../../lib/subscriptions';
 
 type Return = { id: string; orderId: string; state: string; reason: string; createdAt: string };
-type Label = { id: string; returnId: string; carrier: string; service: string; downloadUrl: string; costCents: number; currency: string; createdAt: string };
+type Label = {
+  id: string;
+  returnId: string;
+  carrier: string;
+  service: string;
+  downloadUrl: string;
+  costCents: number;
+  currency: string;
+  createdAt: string;
+};
 
 export default function ReturnStatus() {
   const router = useRouter();
   const { id } = router.query as { id?: string };
-  const apiUrl = useMemo(() => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql', []);
-  const ordersBase = useMemo(() => process.env.NEXT_PUBLIC_ORDERS_URL || 'http://localhost:14002', []);
+  const apiUrl = useMemo(
+    () => process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/graphql',
+    [],
+  );
+  const ordersBase = useMemo(
+    () => process.env.NEXT_PUBLIC_ORDERS_URL || 'http://localhost:14002',
+    [],
+  );
   const [data, setData] = useState<Return | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [label, setLabel] = useState<Label | null>(null);
@@ -68,7 +83,9 @@ export default function ReturnStatus() {
           const l = await rest.json();
           setLabel({ ...l, createdAt: new Date(l.createdAt).toISOString() });
         }
-      } catch {}
+      } catch (e) {
+        // ignore label load failures; UI will show missing label
+      }
     })();
   }, [id, apiUrl]);
 
@@ -93,12 +110,18 @@ export default function ReturnStatus() {
             });
             const json = await res.json();
             if (!json.errors?.length && json.data?.labelByReturn) setLabel(json.data.labelByReturn);
-          } catch {}
+          } catch (e) {
+            // ignore transient errors; subscription may deliver more updates
+          }
         })();
       }
     });
     return () => {
-      try { dispose(); } catch {}
+      try {
+        dispose();
+      } catch (e) {
+        // ignore
+      }
     };
   }, [id, apiUrl]);
 
@@ -109,17 +132,33 @@ export default function ReturnStatus() {
       {error && <p style={{ color: 'red' }}>{error}</p>}
       {data && (
         <div>
-          <p><strong>Return ID:</strong> {data.id}</p>
-          <p><strong>Order ID:</strong> {data.orderId}</p>
-          <p><strong>State:</strong> {data.state}</p>
-          <p><strong>Reason:</strong> {data.reason}</p>
-          <p><strong>Created:</strong> {new Date(data.createdAt).toLocaleString()}</p>
+          <p>
+            <strong>Return ID:</strong> {data.id}
+          </p>
+          <p>
+            <strong>Order ID:</strong> {data.orderId}
+          </p>
+          <p>
+            <strong>State:</strong> {data.state}
+          </p>
+          <p>
+            <strong>Reason:</strong> {data.reason}
+          </p>
+          <p>
+            <strong>Created:</strong> {new Date(data.createdAt).toLocaleString()}
+          </p>
           {label ? (
             <p>
-              <strong>Label:</strong> <a href={label.downloadUrl} target="_blank" rel="noreferrer">Download</a> ({label.carrier} {label.service})
+              <strong>Label:</strong>{' '}
+              <a href={label.downloadUrl} target="_blank" rel="noreferrer">
+                Download
+              </a>{' '}
+              ({label.carrier} {label.service})
             </p>
           ) : (
-            <p><em>No label available yet.</em></p>
+            <p>
+              <em>No label available yet.</em>
+            </p>
           )}
         </div>
       )}

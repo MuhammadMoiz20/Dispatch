@@ -12,6 +12,9 @@ import { AuthController } from './auth.controller';
 import { DevicesController } from './devices.controller';
 import { AuthService } from './auth.service';
 import { MetricsController } from './metrics.controller';
+import { ApiKeysController } from './api-keys.controller';
+import { AuditController } from './audit.controller';
+import { UsersController } from './users.controller';
 
 @Controller('/health')
 class HealthController {
@@ -21,7 +24,18 @@ class HealthController {
   }
 }
 
-@Module({ controllers: [HealthController, AuthController, DevicesController, MetricsController], providers: [PrismaService, AuthService] })
+@Module({
+  controllers: [
+    HealthController,
+    AuthController,
+    DevicesController,
+    MetricsController,
+    ApiKeysController,
+    AuditController,
+    UsersController,
+  ],
+  providers: [PrismaService, AuthService],
+})
 class AppModule {}
 
 async function bootstrap() {

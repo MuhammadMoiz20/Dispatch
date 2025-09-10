@@ -1,4 +1,16 @@
-import { Body, Controller, Delete, Get, Headers, HttpCode, HttpStatus, Param, Post, Put, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Headers,
+  HttpCode,
+  HttpStatus,
+  Param,
+  Post,
+  Put,
+  Query,
+} from '@nestjs/common';
 import { validateOrReject } from 'class-validator';
 import { plainToInstance } from 'class-transformer';
 import { CreateEndpointDto, UpdateEndpointDto, ListDeliveriesQueryDto } from './webhooks.dto';
@@ -30,7 +42,11 @@ export class WebhooksController {
   }
 
   @Put('/endpoints/:id')
-  async updateEndpoint(@Param('id') id: string, @Body() body: UpdateEndpointDto, @Headers('authorization') auth?: string) {
+  async updateEndpoint(
+    @Param('id') id: string,
+    @Body() body: UpdateEndpointDto,
+    @Headers('authorization') auth?: string,
+  ) {
     const dto = plainToInstance(UpdateEndpointDto, body, { enableImplicitConversion: true });
     await validateOrReject(dto as any, { skipMissingProperties: true });
     const tenantId = this.svc.getTenantIdFromAuth(auth);
@@ -44,7 +60,10 @@ export class WebhooksController {
   }
 
   @Get('/deliveries')
-  async listDeliveries(@Query() query: ListDeliveriesQueryDto, @Headers('authorization') auth?: string) {
+  async listDeliveries(
+    @Query() query: ListDeliveriesQueryDto,
+    @Headers('authorization') auth?: string,
+  ) {
     const dto = plainToInstance(ListDeliveriesQueryDto, query, { enableImplicitConversion: true });
     await validateOrReject(dto as any);
     const tenantId = this.svc.getTenantIdFromAuth(auth);
@@ -58,4 +77,3 @@ export class WebhooksController {
     return this.svc.replayDelivery(tenantId, id);
   }
 }
-

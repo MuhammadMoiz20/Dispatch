@@ -23,4 +23,3 @@ test('signup redirects to orders and stores token', async ({ page, baseURL }) =>
   expect(token).toBeTruthy();
   expect(token!.length).toBeGreaterThan(20);
 });
-

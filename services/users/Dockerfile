@@ -57,4 +57,4 @@ COPY --from=build /app/packages ./packages
 EXPOSE 4001
 
 # Start command (migrations run via docker-compose command)
-CMD ["node", "services/users/dist/main.js"]
+CMD ["node", "services/users/dist/services/users/src/main.js"]

@@ -6,6 +6,8 @@ coverage
 services/*/src/generated/
 /.env
 **/.env
+**/.env.local
+**/.env.*.local
 *.log
 .DS_Store
 .idea

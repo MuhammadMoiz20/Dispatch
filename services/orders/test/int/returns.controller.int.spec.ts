@@ -34,15 +34,18 @@ describe('ReturnsController (int, mocked Prisma)', () => {
     (prismaMock.return.findFirst as any).mockResolvedValue(null);
     (prismaMock.return.create as any).mockResolvedValue({ id: 'r1', state: 'initiated' });
 
-    const res = await request(app.getHttpServer()).post('/v1/returns').send({ orderId: 'o1', reason: 'damaged' });
+    const res = await request(app.getHttpServer())
+      .post('/v1/returns')
+      .send({ orderId: 'o1', reason: 'damaged' });
     expect(res.status).toBe(201);
     expect(res.body).toEqual({ id: 'r1', state: 'initiated' });
   });
 
   it('returns 404 when order not found', async () => {
     (prismaMock.order.findUnique as any).mockResolvedValue(null);
-    const res = await request(app.getHttpServer()).post('/v1/returns').send({ orderId: 'x', reason: 'damaged' });
+    const res = await request(app.getHttpServer())
+      .post('/v1/returns')
+      .send({ orderId: 'x', reason: 'damaged' });
     expect(res.status).toBe(404);
   });
 });
-

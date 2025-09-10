@@ -1,10 +1,9 @@
-import type { GqlContextType } from '@nestjs/graphql';
 import jwt from 'jsonwebtoken';
 
 export type AuthContext = {
   req: any;
   res: any;
-  user?: { userId: string; tenantId: string; email?: string } | null;
+  user?: { userId: string; tenantId: string; email?: string; role?: string } | null;
 };
 
 export function getContext({ req, res }: any): AuthContext {
@@ -18,8 +17,11 @@ export function getContext({ req, res }: any): AuthContext {
         // Support tokens that use either `userId` or standard JWT `sub` claim
         const userId = decoded?.userId || decoded?.sub;
         const tenantId = decoded?.tenantId;
-        if (userId && tenantId) user = { userId, tenantId, email: decoded.email };
-      } catch {}
+        const role = decoded?.role;
+        if (userId && tenantId) user = { userId, tenantId, email: decoded.email, role };
+      } catch (err) {
+        // Ignore verification errors; user remains unauthenticated
+      }
     }
   }
   return { req, res, user };

@@ -12,4 +12,3 @@ describe('WebhooksService backoff', () => {
     expect(svc.computeBackoffMs(6)).toBe(60000);
   });
 });
-

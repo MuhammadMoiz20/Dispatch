@@ -1,0 +1,54 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light dark;
+}
+
+html,
+body,
+#__next {
+  height: 100%;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+}
+.dark body {
+  @apply bg-gray-950 text-gray-100;
+}
+
+.card {
+  @apply bg-white dark:bg-gray-900 rounded-xl border border-gray-200/70 dark:border-gray-800 shadow-sm;
+}
+.card-header {
+  @apply px-5 pt-4 pb-2 text-sm font-medium text-gray-500 dark:text-gray-400;
+}
+.card-body {
+  @apply px-5 pb-5;
+}
+
+.btn-primary {
+  @apply inline-flex items-center justify-center px-3 py-2 rounded-md bg-brand-600 hover:bg-brand-700 text-white text-sm font-medium;
+}
+.btn-secondary {
+  @apply inline-flex items-center justify-center px-3 py-2 rounded-md bg-gray-100 hover:bg-gray-200 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-gray-100 text-sm font-medium;
+}
+
+/* Map Tailwind brand utilities to theme tokens for dynamic theming */
+.bg-brand-600 {
+  background-color: var(--color-accent) !important;
+}
+.hover\:bg-brand-700:hover {
+  background-color: color-mix(in oklab, var(--color-accent), black 12%) !important;
+}
+.text-brand-700 {
+  color: var(--color-accent) !important;
+}
+.dark .text-brand-300 {
+  color: color-mix(in oklab, var(--color-accent), white 40%) !important;
+}
+.bg-brand-50 {
+  background-color: color-mix(in oklab, var(--color-accent), white 90%) !important;
+}

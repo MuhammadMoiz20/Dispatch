@@ -53,7 +53,10 @@ describe('OrdersController + Idempotency (int)', () => {
     return Promise.resolve(arg);
   });
 
-  const token = jwt.sign({ userId: 'u1', tenantId: 't1', email: 'a@b.com' }, process.env.JWT_SECRET || 'dev-secret');
+  const token = jwt.sign(
+    { userId: 'u1', tenantId: 't1', email: 'a@b.com' },
+    process.env.JWT_SECRET || 'dev-secret',
+  );
 
   beforeAll(async () => {
     const moduleRef = await Test.createTestingModule({
@@ -77,7 +80,11 @@ describe('OrdersController + Idempotency (int)', () => {
     // Ensure any call path inside mocked transaction returns a created order
     (prismaMock.order.create as any).mockImplementation(async () => ({ id: 'o1', items: [] }));
 
-    const payload = { channel: 'shopify', externalId: `E-${Date.now()}`, items: [{ sku: 's1', quantity: 1 }] };
+    const payload = {
+      channel: 'shopify',
+      externalId: `E-${Date.now()}`,
+      items: [{ sku: 's1', quantity: 1 }],
+    };
     const key = 'idem-123';
 
     const r1 = await request(app.getHttpServer())
@@ -103,7 +110,11 @@ describe('OrdersController + Idempotency (int)', () => {
   it('POST /v1/orders/ingest with same Idempotency-Key but mismatched payload returns 409', async () => {
     (prismaMock.order.create as any).mockImplementation(async () => ({ id: 'o2', items: [] }));
     const baseKey = 'idem-456';
-    const p1 = { channel: 'shopify', externalId: `E-${Date.now()}-A`, items: [{ sku: 's1', quantity: 1 }] };
+    const p1 = {
+      channel: 'shopify',
+      externalId: `E-${Date.now()}-A`,
+      items: [{ sku: 's1', quantity: 1 }],
+    };
     const p2 = { ...p1, items: [{ sku: 's1', quantity: 2 }] }; // mismatched
 
     const r1 = await request(app.getHttpServer())
@@ -126,7 +137,14 @@ describe('OrdersController + Idempotency (int)', () => {
   it('GET /v1/orders applies pagination and filters', async () => {
     (prismaMock.order.count as any).mockResolvedValue(3);
     (prismaMock.order.findMany as any).mockResolvedValue([
-      { id: 'o9', channel: 'shopify', externalId: 'E-9', status: 'created', createdAt: new Date(), _count: { items: 2 } },
+      {
+        id: 'o9',
+        channel: 'shopify',
+        externalId: 'E-9',
+        status: 'created',
+        createdAt: new Date(),
+        _count: { items: 2 },
+      },
     ]);
 
     const r = await request(app.getHttpServer())
@@ -136,7 +154,9 @@ describe('OrdersController + Idempotency (int)', () => {
 
     expect(r.status).toBe(200);
     expect(r.body.page).toBe(2);
-    expect(prismaMock.order.count).toHaveBeenCalledWith({ where: { tenantId: 't1', status: 'created', channel: 'shopify' } });
+    expect(prismaMock.order.count).toHaveBeenCalledWith({
+      where: { tenantId: 't1', status: 'created', channel: 'shopify' },
+    });
     expect(prismaMock.order.findMany).toHaveBeenCalledWith(
       expect.objectContaining({
         where: { tenantId: 't1', status: 'created', channel: 'shopify' },

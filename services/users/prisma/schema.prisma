@@ -24,6 +24,8 @@ model User {
   tenant Tenant @relation(fields: [tenantId], references: [id])
   authCredential AuthCredential?
   devices Device[] @relation("UserDevices")
+  apiKeys ApiKey[]
+  auditLogs AuditLog[] @relation("UserAuditLogs")
   @@index([tenantId])
 }
 
@@ -47,4 +49,36 @@ model Device {
   user User @relation("UserDevices", fields: [userId], references: [id])
 
   @@index([userId])
+}
+
+model ApiKey {
+  id         String   @id @default(uuid())
+  tenantId   String
+  name       String
+  keyPrefix  String   @unique
+  keyHash    String
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime?
+  createdBy  String
+
+  user User @relation(fields: [createdBy], references: [id])
+
+  @@index([tenantId])
+}
+
+model AuditLog {
+  id         String   @id @default(uuid())
+  tenantId   String
+  userId     String?
+  apiKeyId   String?
+  action     String
+  resource   String
+  resourceId String?
+  ip         String?
+  metadata   Json?
+  createdAt  DateTime @default(now())
+
+  user User? @relation("UserAuditLogs", fields: [userId], references: [id])
+
+  @@index([tenantId])
 }
